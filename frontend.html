@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Millennium Radius - Application Portal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            color: #e0e6ff;
+            overflow-x: hidden;
+            background: #0f1828;
+        }
+
+        /* ==================== STARFIELD BACKGROUND ==================== */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(2px 2px at 20% 30%, #eee, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 60% 70%, #fff, rgba(0,0,0,0)),
+                radial-gradient(1px 1px at 50% 50%, #ddd, rgba(0,0,0,0)),
+                radial-gradient(1px 1px at 80% 10%, #fff, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 90% 60%, #eee, rgba(0,0,0,0)),
+                radial-gradient(1px 1px at 30% 80%, #ddd, rgba(0,0,0,0)),
+                radial-gradient(1px 1px at 70% 40%, #fff, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 10% 90%, #eee, rgba(0,0,0,0)),
+                linear-gradient(#0f1828 0%, #1a2a4a 50%, #0f1828 100%);
+            background-size: 
+                200% 200%,
+                300% 300%,
+                250% 250%,
+                350% 350%,
+                400% 400%,
+                280% 280%,
+                320% 320%,
+                380% 380%,
+                100% 100%;
+            background-position: 
+                0% 0%,
+                40% 60%,
+                20% 80%,
+                60% 20%,
+                80% 40%,
+                30% 70%,
+                70% 30%,
+                50% 50%,
+                0% 0%;
+            animation: 
+                starfieldMove1 120s linear infinite,
+                starfieldMove2 150s linear infinite,
+                starfieldMove3 100s linear infinite,
+                starfieldMove4 180s linear infinite,
+                starfieldMove5 140s linear infinite,
+                starfieldMove6 110s linear infinite,
+                starfieldMove7 160s linear infinite,
+                starfieldMove8 130s linear infinite;
+            z-index: -2;
+        }
+
+        @keyframes starfieldMove1 {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 200% 200%; }
+        }
+
+        @keyframes starfieldMove2 {
+            0% { background-position: 40% 60%; }
+            100% { background-position: 240% 260%; }
+        }
+
+        @keyframes starfieldMove3 {
+            0% { background-position: 20% 80%; }
+            100% { background-position: 220% 280%; }
+        }
+
+        @keyframes starfieldMove4 {
+            0% { background-position: 60% 20%; }
+            100% { background-position: 260% 220%; }
+        }
+
+        @keyframes starfieldMove5 {
+            0% { background-position: 80% 40%; }
+            100% { background-position: 280% 240%; }
+        }
+
+        @keyframes starfieldMove6 {
+            0% { background-position: 30% 70%; }
+            100% { background-position: 230% 270%; }
+        }
+
+        @keyframes starfieldMove7 {
+            0% { background-position: 70% 30%; }
+            100% { background-position: 270% 230%; }
+        }
+
+        @keyframes starfieldMove8 {
+            0% { background-position: 50% 50%; }
+            100% { background-position: 250% 250%; }
+        }
+
+        /* Animated particles overlay */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(100, 200, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(147, 112, 219, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(100, 200, 255, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 90% 10%, rgba(147, 112, 219, 0.08) 0%, transparent 50%);
+            background-size: 300px 300px, 400px 400px, 350px 350px, 450px 450px;
+            animation: 
+                particleFloat1 20s ease-in-out infinite,
+                particleFloat2 25s ease-in-out infinite,
+                particleFloat3 30s ease-in-out infinite,
+                particleFloat4 35s ease-in-out infinite;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        @keyframes particleFloat1 {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(50px, -50px); }
+        }
+
+        @keyframes particleFloat2 {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(-50px, 50px); }
+        }
+
+        @keyframes particleFloat3 {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(-40px, -40px); }
+        }
+
+        @keyframes particleFloat4 {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(40px, 40px); }
+        }
+
+        /* Main content container */
+        .main-container {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Login Screen */
+        .login-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .login-container.hidden {
+            display: none;
+        }
+
+        .login-card {
+            background: rgba(15, 24, 40, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(100, 150, 255, 0.2);
+            animation: cardSlideUp 0.6s ease-out;
+        }
+
+        @keyframes cardSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #64c8ff 0%, #9370db 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            margin: 0 auto 20px;
+            box-shadow: 0 0 20px rgba(100, 200, 255, 0.4);
+            animation: iconPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes iconPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(100, 200, 255, 0.4); }
+            50% { transform: scale(1.05); box-shadow: 0 0 30px rgba(100, 200, 255, 0.6); }
+        }
+
+        .login-header h1 {
+            font-size: 24px;
+            color: #e0e6ff;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .login-header p {
+            color: #8899bb;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #b0c4ff;
+            margin-bottom: 8px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid rgba(100, 150, 255, 0.3);
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+            background: rgba(30, 40, 60, 0.6);
+            color: #e0e6ff;
+        }
+
+        .form-group input::placeholder {
+            color: #668899;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #64c8ff;
+            box-shadow: 0 0 0 3px rgba(100, 200, 255, 0.1);
+            background: rgba(30, 40, 60, 0.8);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #4a7dd9 0%, #6a5acc 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(74, 125, 217, 0.3);
+        }
+
+        .login-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(74, 125, 217, 0.5);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .login-error {
+            color: #ff6b6b;
+            font-size: 12px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .login-error.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .login-info {
+            background: rgba(50, 80, 120, 0.3);
+            border: 1px solid rgba(100, 150, 255, 0.2);
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #8ab4ff;
+            line-height: 1.6;
+        }
+
+        .login-info code {
+            background: rgba(20, 30, 50, 0.6);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #64c8ff;
+        }
+
+        .admin-badge {
+            background: rgba(100, 150, 100, 0.2);
+            border: 1px solid rgba(100, 200, 100, 0.3);
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            color: #8fd48f;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        /* Portal Screen */
+        .portal-container {
+            display: none;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .portal-container.visible {
+            display: block;
+        }
+
+        .portal-content {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(15, 24, 40, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(100, 150, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            animation: cardSlideDown 0.6s ease-out;
+        }
+
+        @keyframes cardSlideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-logo {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #64c8ff 0%, #9370db 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 24px;
+            box-shadow: 0 0 20px rgba(100, 200, 255, 0.4);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            color: #e0e6ff;
+            margin: 0;
+            font-weight: 700;
+        }
+
+        .user-info {
+            font-size: 12px;
+            color: #8899bb;
+            margin-top: 5px;
+        }
+
+        .admin-indicator {
+            display: inline-block;
+            background: rgba(100, 150, 100, 0.2);
+            color: #8fd48f;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 10px;
+            border: 1px solid rgba(100, 200, 100, 0.3);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .logout-btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #d94444 0%, #b83636 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(217, 68, 68, 0.3);
+        }
+
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(217, 68, 68, 0.4);
+        }
+
+        .admin-console-btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #4a7dd9 0%, #6a5acc 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+            box-shadow: 0 4px 12px rgba(74, 125, 217, 0.3);
+        }
+
+        .admin-console-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(74, 125, 217, 0.4);
+        }
+
+        /* Controls */
+        .controls {
+            background: rgba(15, 24, 40, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(100, 150, 255, 0.2);
+            animation: cardSlideDown 0.6s ease-out 0.1s both;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid rgba(100, 150, 255, 0.3);
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+            background: rgba(30, 40, 60, 0.6);
+            color: #e0e6ff;
+        }
+
+        .search-input::placeholder {
+            color: #668899;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #64c8ff;
+            box-shadow: 0 0 0 3px rgba(100, 200, 255, 0.1);
+            background: rgba(30, 40, 60, 0.8);
+        }
+
+        .filter-tabs {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-tab {
+            padding: 8px 16px;
+            background: rgba(50, 80, 120, 0.3);
+            border: 1px solid rgba(100, 150, 255, 0.2);
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #8899bb;
+            transition: all 0.3s;
+            backdrop-filter: blur(4px);
+        }
+
+        .filter-tab:hover {
+            background: rgba(50, 80, 120, 0.5);
+            border-color: rgba(100, 150, 255, 0.4);
+        }
+
+        .filter-tab.active {
+            background: linear-gradient(135deg, rgba(74, 125, 217, 0.5) 0%, rgba(106, 90, 204, 0.5) 100%);
+            color: #e0e6ff;
+            border-color: rgba(100, 150, 255, 0.5);
+            box-shadow: 0 4px 12px rgba(74, 125, 217, 0.2);
+        }
+
+        .filter-count {
+            opacity: 0.7;
+            font-size: 12px;
+        }
+
+        /* Stats */
+        .stats {
+            background: rgba(15, 24, 40, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 15px 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(100, 150, 255, 0.2);
+            font-size: 14px;
+            color: #8899bb;
+            animation: cardSlideDown 0.6s ease-out 0.2s both;
+        }
+
+        /* Grid */
+        .applications-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+            animation: fadeIn 0.6s ease-out 0.3s both;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .app-card {
+            background: rgba(15, 24, 40, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(100, 150, 255, 0.2);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .app-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(100, 200, 255, 0.1), transparent);
+            transition: left 0.5s;
+            pointer-events: none;
+        }
+
+        .app-card:hover::before {
+            left: 100%;
+        }
+
+        .app-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 16px 48px rgba(74, 125, 217, 0.2),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            border-color: rgba(100, 150, 255, 0.4);
+        }
+
+        .app-card.inactive-card {
+            opacity: 0.6;
+            background: rgba(20, 30, 50, 0.7);
+        }
+
+        .app-card.inactive-card:hover {
+            transform: none;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .card-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+            animation: iconFloat 3s ease-in-out infinite;
+        }
+
+        @keyframes iconFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .card-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #e0e6ff;
+            margin-bottom: 8px;
+        }
+
+        .card-category {
+            display: inline-block;
+            background: rgba(100, 150, 200, 0.2);
+            color: #8ab4ff;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            border: 1px solid rgba(100, 150, 255, 0.2);
+        }
+
+        .card-description {
+            font-size: 14px;
+            color: #8899bb;
+            margin-bottom: 15px;
+            flex-grow: 1;
+        }
+
+        .card-footer {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            border-top: 1px solid rgba(100, 150, 255, 0.1);
+            padding-top: 15px;
+        }
+
+        .active-badge {
+            display: inline-block;
+            background: rgba(100, 200, 100, 0.2);
+            color: #8fd48f;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            border: 1px solid rgba(100, 200, 100, 0.3);
+        }
+
+        .inactive-badge {
+            display: inline-block;
+            background: rgba(200, 100, 100, 0.2);
+            color: #ff9999;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            border: 1px solid rgba(200, 100, 100, 0.3);
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 10px;
+            margin-left: auto;
+        }
+
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            background: rgba(100, 150, 200, 0.2);
+            border: 1px solid rgba(100, 150, 255, 0.2);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .icon-btn:hover:not(:disabled) {
+            background: rgba(100, 150, 200, 0.4);
+            border-color: rgba(100, 150, 255, 0.4);
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(100, 200, 255, 0.2);
+        }
+
+        .icon-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .copy-btn {
+            background: rgba(100, 150, 200, 0.2);
+            color: #64c8ff;
+            border: 1px solid rgba(100, 150, 255, 0.2);
+        }
+
+        .copy-btn:hover:not(:disabled) {
+            background: rgba(100, 150, 200, 0.4);
+        }
+
+        .copy-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            color: #668899;
+        }
+
+        .launch-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #4a7dd9 0%, #6a5acc 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 15px;
+            box-shadow: 0 4px 12px rgba(74, 125, 217, 0.3);
+        }
+
+        .launch-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(74, 125, 217, 0.5);
+        }
+
+        .launch-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: linear-gradient(135deg, #5a5a6a 0%, #4a4a5a 100%);
+            transform: none;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: rgba(15, 24, 40, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 40px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(100, 150, 255, 0.2);
+            position: relative;
+            animation: slideUp 0.4s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #8899bb;
+            transition: all 0.3s;
+        }
+
+        .modal-close:hover {
+            color: #e0e6ff;
+            transform: scale(1.2);
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #e0e6ff;
+            margin-bottom: 20px;
+            margin-right: 30px;
+        }
+
+        .credential-row {
+            background: rgba(50, 80, 120, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(100, 150, 255, 0.2);
+        }
+
+        .credential-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #8899bb;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+            letter-spacing: 0.5px;
+        }
+
+        .credential-value {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .credential-text {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: #e0e6ff;
+            word-break: break-all;
+            flex: 1;
+        }
+
+        .copy-icon {
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #64c8ff;
+        }
+
+        .copy-icon:hover {
+            transform: scale(1.2);
+        }
+
+        .pwd-toggle {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 0 8px;
+            transition: all 0.3s;
+            color: #64c8ff;
+        }
+
+        .pwd-toggle:hover {
+            transform: scale(1.2);
+        }
+
+        .copy-feedback {
+            display: none;
+            color: #8fd48f;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .copy-feedback.show {
+            display: inline;
+            animation: slideDown 0.3s ease;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #8899bb;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .empty-state h2 {
+            font-size: 20px;
+            color: #e0e6ff;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                text-align: center;
+                gap: 20px;
+            }
+
+            .applications-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                width: 95%;
+                padding: 30px;
+            }
+
+            .search-box {
+                flex-direction: column;
+            }
+
+            .header-actions {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .logout-btn, .admin-console-btn {
+                width: 100%;
+            }
+
+            .login-card {
+                width: 95%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Login Screen -->
+        <div class="login-container" id="loginSection">
+            <div class="login-card">
+                <div class="login-header">
+                    <div class="login-icon">🏢</div>
+                    <h1>Portal Access</h1>
+                    <p>Millennium Radius Application Portal</p>
+                </div>
+
+                <div id="adminNotice" class="admin-badge" style="display: none;">
+                    <strong>👤 Admin Detected:</strong><br>
+                    You are logged in as admin. Portal access granted automatically!
+                </div>
+
+                <form onsubmit="handleLogin(event)" id="loginForm">
+                    <div class="form-group">
+                        <label>Portal Password</label>
+                        <input type="password" id="portalPassword" placeholder="Enter portal password" required autofocus>
+                    </div>
+                    <button type="submit" class="login-btn" id="loginBtn">Access Portal</button>
+                    <div class="login-error" id="loginError"></div>
+                </form>
+
+                <div class="login-info">
+                    <strong>ℹ️ Default Password:</strong><br>
+                    <code>portal123</code><br><br>
+                    <strong>Note:</strong> Password is validated on the server for security.
+                </div>
+            </div>
+        </div>
+
+        <!-- Portal Screen -->
+        <div class="portal-container" id="portalSection">
+            <div class="portal-content">
+                <!-- Header -->
+                <div class="header">
+                    <div class="header-title">
+                        <div class="header-logo">🏢</div>
+                        <div>
+                            <h1>Application Portal</h1>
+                            <div class="user-info">
+                                <span id="userTypeIndicator"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="header-actions">
+                        <a id="adminLink" href="management.html" class="admin-console-btn" style="display: none;">⚙️ Admin Console</a>
+                        <button class="logout-btn" onclick="handleLogout()">🚪 Logout</button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="controls">
+                    <div class="search-box">
+                        <input 
+                            type="text" 
+                            class="search-input" 
+                            id="searchInput" 
+                            placeholder="🔍 Search applications..." 
+                            onkeyup="filterApps()"
+                        >
+                    </div>
+
+                    <div class="filter-tabs" id="filterTabs"></div>
+                </div>
+
+                <!-- Stats -->
+                <div class="stats" id="statsDiv"></div>
+
+                <!-- Applications Grid -->
+                <div class="applications-grid" id="applicationsGrid">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">⏳</div>
+                        <h2>Loading applications...</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Credentials Modal -->
+    <div class="modal" id="credentialsModal" onclick="if(event.target.id === 'credentialsModal') closeModal()">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">✕</button>
+            <div class="modal-title" id="modalTitle"></div>
+
+            <div class="credential-row">
+                <div class="credential-label">URL</div>
+                <div class="credential-value">
+                    <span class="credential-text" id="urlValue"></span>
+                    <span class="copy-icon" onclick="copyToClipboard('urlValue')">📋</span>
+                    <span class="copy-feedback" id="urlFeedback">✓ Copied!</span>
+                </div>
+            </div>
+
+            <div class="credential-row">
+                <div class="credential-label">Username</div>
+                <div class="credential-value">
+                    <span class="credential-text" id="usernameValue"></span>
+                    <span class="copy-icon" onclick="copyToClipboard('usernameValue')">📋</span>
+                    <span class="copy-feedback" id="usernameFeedback">✓ Copied!</span>
+                </div>
+            </div>
+
+            <div class="credential-row">
+                <div class="credential-label">Password</div>
+                <div class="credential-value">
+                    <span class="credential-text" id="passwordValue"></span>
+                    <button class="pwd-toggle" id="pwdToggle" onclick="togglePassword()">👁️</button>
+                    <span class="copy-icon" onclick="copyPassword()">📋</span>
+                    <span class="copy-feedback" id="passwordFeedback">✓ Copied!</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let applications = [];
+        let sessionId = null;
+        let isAdminUser = false;
+        let currentPassword = null;
+
+        // ==================== INITIALIZATION ====================
+        window.addEventListener('load', async () => {
+            const adminSessionId = localStorage.getItem('sessionId');
+            if (adminSessionId) {
+                isAdminUser = true;
+                sessionId = adminSessionId;
+                
+                document.getElementById('adminNotice').style.display = 'block';
+                document.getElementById('loginForm').style.display = 'none';
+                document.getElementById('loginSection').classList.add('hidden');
+                document.getElementById('portalSection').classList.add('visible');
+                document.getElementById('adminLink').style.display = 'inline-block';
+                document.getElementById('userTypeIndicator').textContent = '👤 Admin User (Full Access)';
+                
+                loadApplications();
+                return;
+            }
+
+            const portalSessionId = localStorage.getItem('portalSessionId');
+            if (portalSessionId) {
+                isAdminUser = false;
+                sessionId = portalSessionId;
+                
+                document.getElementById('loginSection').classList.add('hidden');
+                document.getElementById('portalSection').classList.add('visible');
+                document.getElementById('userTypeIndicator').textContent = '👤 Portal User';
+                
+                loadApplications();
+                return;
+            }
+
+            document.getElementById('loginSection').classList.remove('hidden');
+        });
+
+        // ==================== AUTHENTICATION ====================
+        async function handleLogin(event) {
+            event.preventDefault();
+            const password = document.getElementById('portalPassword').value;
+            const loginBtn = document.getElementById('loginBtn');
+            const loginError = document.getElementById('loginError');
+
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Accessing...';
+
+            try {
+                const response = await fetch('/api/auth/portal/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Server error: ${response.status}`);
+                }
+
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error('Server returned non-JSON response');
+                }
+
+                const data = await response.json();
+
+                if (data.success) {
+                    isAdminUser = false;
+                    sessionId = data.sessionId;
+                    localStorage.setItem('portalSessionId', sessionId);
+                    
+                    document.getElementById('loginSection').classList.add('hidden');
+                    document.getElementById('portalSection').classList.add('visible');
+                    document.getElementById('userTypeIndicator').textContent = '👤 Portal User';
+                    loadApplications();
+                    loginBtn.textContent = 'Access Portal';
+                    loginBtn.disabled = false;
+                } else {
+                    loginError.textContent = '❌ ' + (data.error || 'Access denied');
+                    loginError.classList.add('show');
+                    loginBtn.textContent = 'Access Portal';
+                    loginBtn.disabled = false;
+                    setTimeout(() => loginError.classList.remove('show'), 3000);
+                }
+            } catch (error) {
+                loginError.textContent = '❌ Error: ' + error.message;
+                loginError.classList.add('show');
+                loginBtn.textContent = 'Access Portal';
+                loginBtn.disabled = false;
+            }
+        }
+
+        async function handleLogout() {
+            if (sessionId) {
+                try {
+                    const logoutType = isAdminUser ? 'admin' : 'portal';
+                    await fetch('/api/auth/logout', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ sessionId, type: logoutType })
+                    });
+                } catch (error) {
+                    console.error('Logout error:', error);
+                }
+            }
+
+            sessionId = null;
+            isAdminUser = false;
+            localStorage.removeItem('portalSessionId');
+            localStorage.removeItem('sessionId');
+            
+            document.getElementById('loginSection').classList.remove('hidden');
+            document.getElementById('portalSection').classList.remove('visible');
+            document.getElementById('adminNotice').style.display = 'none';
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('portalPassword').value = '';
+        }
+
+        // ==================== LOAD APPLICATIONS ====================
+        async function loadApplications() {
+            try {
+                const response = await fetch('/data.json');
+                if (!response.ok) throw new Error('Failed to load data');
+                applications = await response.json();
+                renderFilterTabs();
+                renderStats();
+                renderApps();
+            } catch (error) {
+                console.error('Error loading applications:', error);
+            }
+        }
+
+        // ==================== FILTER TABS ====================
+        function renderFilterTabs() {
+            const categories = ['All', ...new Set(applications.map(a => a.category))];
+            const tabsContainer = document.getElementById('filterTabs');
+            
+            tabsContainer.innerHTML = categories.map(category => {
+                const count = category === 'All' ? applications.length : applications.filter(a => a.category === category).length;
+                return `
+                    <button class="filter-tab ${category === 'All' ? 'active' : ''}" onclick="selectCategory('${category}')">
+                        ${category}
+                        <span class="filter-count">(${count})</span>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        let selectedCategory = 'All';
+
+        function selectCategory(category) {
+            selectedCategory = category;
+            document.querySelectorAll('.filter-tab').forEach(tab => tab.classList.remove('active'));
+            event.target.closest('.filter-tab').classList.add('active');
+            filterApps();
+        }
+
+        // ==================== FILTER APPLICATIONS ====================
+        function filterApps() {
+            const searchText = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = applications.filter(app => {
+                const matchesCategory = selectedCategory === 'All' || app.category === selectedCategory;
+                const matchesSearch = app.name.toLowerCase().includes(searchText) || 
+                                    app.description.toLowerCase().includes(searchText);
+                return matchesCategory && matchesSearch;
+            });
+
+            renderStats(filtered);
+            renderApps(filtered);
+        }
+
+        // ==================== RENDER STATS ====================
+        function renderStats(filtered = applications) {
+            const statsDiv = document.getElementById('statsDiv');
+            statsDiv.textContent = `Showing ${filtered.length} of ${applications.length} applications`;
+        }
+
+        // ==================== RENDER APPLICATIONS ====================
+        function renderApps(filtered = applications) {
+            const grid = document.getElementById('applicationsGrid');
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div style="grid-column: 1 / -1;">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📭</div>
+                            <h2>No applications found</h2>
+                            <p style="color: #668899;">Try adjusting your search or filter</p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(app => `
+                <div class="app-card ${!app.isActive ? 'inactive-card' : ''}">
+                    <div class="card-icon">${app.icon}</div>
+                    <div class="card-name">${app.name}</div>
+                    <div class="card-category">${app.category}</div>
+                    <div class="card-description">${app.description}</div>
+                    <div class="card-footer">
+                        ${app.isActive ? '<div class="active-badge">✓ Active</div>' : '<div class="inactive-badge">✕ Inactive</div>'}
+                        <div class="card-actions">
+                            <button class="icon-btn copy-btn" 
+                                    onclick="${app.isActive ? `showCredentials(${app.id}, '${app.name}', '${app.username}', '${app.password}')` : 'return false;'}"
+                                    ${!app.isActive ? 'disabled' : ''}
+                                    title="${!app.isActive ? 'This app is inactive' : 'View credentials'}">🔑</button>
+                        </div>
+                    </div>
+                    <button class="launch-btn" 
+                            onclick="${app.isActive ? `window.open('${app.url}', '_blank')` : 'return false;'}"
+                            ${!app.isActive ? 'disabled' : ''}
+                            title="${!app.isActive ? 'This app is inactive' : 'Launch application'}">🚀 Launch App</button>
+                </div>
+            `).join('');
+        }
+
+        // ==================== CREDENTIALS MODAL ====================
+        function showCredentials(id, name, username, password) {
+            document.getElementById('modalTitle').textContent = `${name} Credentials`;
+            document.getElementById('urlValue').textContent = applications.find(a => a.id === id)?.url || '';
+            document.getElementById('usernameValue').textContent = username;
+            document.getElementById('passwordValue').textContent = maskPassword(password);
+            currentPassword = password;
+            document.getElementById('pwdToggle').textContent = '👁️';
+            document.getElementById('credentialsModal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('credentialsModal').classList.remove('show');
+            currentPassword = null;
+        }
+
+        function maskPassword(password) {
+            return '*'.repeat(password.length);
+        }
+
+        function togglePassword() {
+            const pwdElement = document.getElementById('passwordValue');
+            const toggle = document.getElementById('pwdToggle');
+
+            if (pwdElement.textContent.includes('*')) {
+                pwdElement.textContent = currentPassword;
+                toggle.textContent = '🙈';
+            } else {
+                pwdElement.textContent = maskPassword(currentPassword);
+                toggle.textContent = '👁️';
+            }
+        }
+
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            const text = element.textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                const feedbackId = elementId.replace('Value', 'Feedback');
+                const feedback = document.getElementById(feedbackId);
+                feedback.classList.add('show');
+                setTimeout(() => feedback.classList.remove('show'), 2000);
+            });
+        }
+
+        function copyPassword() {
+            navigator.clipboard.writeText(currentPassword).then(() => {
+                const feedback = document.getElementById('passwordFeedback');
+                feedback.classList.add('show');
+                setTimeout(() => feedback.classList.remove('show'), 2000);
+            });
+        }
+
+        // ==================== KEYBOARD SHORTCUTS ====================
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>

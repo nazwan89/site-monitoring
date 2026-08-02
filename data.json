@@ -1,0 +1,90 @@
+[
+    {
+        "id": 1,
+        "name": "Cognisense",
+        "icon": "🧠",
+        "category": "Core Systems",
+        "description": "Core business management system",
+        "url": "https://cognisense.example.com",
+        "username": "admin",
+        "password": "Cognisense123!",
+        "isActive": true
+    },
+    {
+        "id": 2,
+        "name": "Salesforce",
+        "icon": "🌐",
+        "category": "CRM",
+        "description": "Customer relationship management platform",
+        "url": "https://salesforce.example.com",
+        "username": "crm@company.com",
+        "password": "Salesforce@2024",
+        "isActive": false
+    },
+    {
+        "id": 3,
+        "name": "Slack",
+        "icon": "💬",
+        "category": "Communication",
+        "description": "Team messaging and collaboration",
+        "url": "https://slack.example.com",
+        "username": "admin@company.com",
+        "password": "Slack#Secure123",
+        "isActive": true
+    },
+    {
+        "id": 4,
+        "name": "Monday.com",
+        "icon": "📋",
+        "category": "Project Management",
+        "description": "Work management and project tracking",
+        "url": "https://monday.example.com",
+        "username": "manager@company.com",
+        "password": "Monday!2024",
+        "isActive": true
+    },
+    {
+        "id": 5,
+        "name": "GitHub",
+        "icon": "🐙",
+        "category": "Development",
+        "description": "Code repository and collaboration",
+        "url": "https://github.com",
+        "username": "dev@company.com",
+        "password": "GitHub$Secure",
+        "isActive": true
+    },
+    {
+        "id": 6,
+        "name": "Jira",
+        "icon": "🐛",
+        "category": "Development",
+        "description": "Issue and project tracking",
+        "url": "https://jira.example.com",
+        "username": "admin@company.com",
+        "password": "Jira*Issue2024",
+        "isActive": true
+    },
+    {
+        "id": 7,
+        "name": "Neo4j",
+        "icon": "🔗",
+        "category": "Analytics & Data",
+        "description": "Graph database platform",
+        "url": "https://neo4j.example.com",
+        "username": "analyst@company.com",
+        "password": "Neo4j@Graph123",
+        "isActive": true
+    },
+    {
+        "id": 8,
+        "name": "Power BI",
+        "icon": "📊",
+        "category": "Analytics & Data",
+        "description": "Business analytics and visualization",
+        "url": "https://powerbi.example.com",
+        "username": "bi@company.com",
+        "password": "PowerBI!2024",
+        "isActive": true
+    }
+]

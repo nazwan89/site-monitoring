@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Millennium Radius - Application Portal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .logo h1 {
+            font-size: 28px;
+            margin: 0;
+        }
+
+        .logo p {
+            font-size: 12px;
+            opacity: 0.9;
+            margin: 0;
+        }
+
+        .admin-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            border: 2px solid rgba(255,255,255,0.3);
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .admin-link:hover {
+            background: rgba(255,255,255,0.3);
+            border-color: rgba(255,255,255,0.5);
+        }
+
+        .header h2 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.95;
+        }
+
+        /* Search Section */
+        .search-section {
+            padding: 30px 40px;
+            border-bottom: 1px solid #e5e7eb;
+            background: #f9fafb;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        /* Filter Section */
+        .filter-section {
+            padding: 20px 40px;
+            background: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .filter-tag {
+            padding: 8px 16px;
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #6b7280;
+        }
+
+        .filter-tag:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .filter-tag.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+        }
+
+        /* Content */
+        .content {
+            padding: 40px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .result-count {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 20px;
+        }
+
+        /* Grid */
+        .apps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        /* App Card */
+        .app-card {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s;
+            cursor: pointer;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .app-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 12px 24px rgba(102, 126, 234, 0.15);
+            transform: translateY(-4px);
+        }
+
+        .app-card.disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .app-card.disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .app-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            display: inline-block;
+        }
+
+        .app-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 5px;
+        }
+
+        .app-category {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .app-description {
+            font-size: 13px;
+            color: #6b7280;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .app-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .status-text {
+            font-size: 12px;
+            font-weight: 600;
+            color: #10b981;
+            background: #d1fae5;
+            padding: 4px 12px;
+            border-radius: 12px;
+        }
+
+        .app-launch-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .app-launch-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+        }
+
+        .app-launch-btn:disabled {
+            background: #d1d5db;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Credentials */
+        .app-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .credential-icon {
+            background: none;
+            border: none;
+            font-size: 14px;
+            cursor: pointer;
+            padding: 2px 4px;
+            border-radius: 4px;
+            transition: all 0.2s;
+            color: #9ca3af;
+            flex-shrink: 0;
+        }
+
+        .credential-icon:hover {
+            color: #667eea;
+            transform: scale(1.15);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .modal-header h2 {
+            font-size: 22px;
+            color: #1f2937;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #6b7280;
+            transition: color 0.2s;
+        }
+
+        .modal-close:hover {
+            color: #1f2937;
+        }
+
+        .credential-item {
+            margin-bottom: 20px;
+        }
+
+        .credential-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .credential-label {
+            font-size: 12px;
+            font-weight: 700;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .credential-display {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .credential-value {
+            flex: 1;
+            background: #f3f4f6;
+            padding: 12px;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            color: #1f2937;
+            word-break: break-all;
+        }
+
+        .credential-value.masked {
+            font-size: 16px;
+            letter-spacing: 2px;
+            color: #6b7280;
+        }
+
+        .copy-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .copy-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .copy-btn.copied {
+            background: #10b981;
+        }
+
+        .no-credentials {
+            background: #fef3c7;
+            border: 1px solid #fcd34d;
+            color: #92400e;
+            padding: 15px;
+            border-radius: 6px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 40px;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .empty-state h3 {
+            font-size: 20px;
+            color: #1f2937;
+            margin-bottom: 10px;
+        }
+
+        .empty-state p {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        /* Footer */
+        .footer {
+            background: #f9fafb;
+            border-top: 1px solid #e5e7eb;
+            padding: 20px 40px;
+            text-align: center;
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                padding: 30px 20px;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .header h2 {
+                font-size: 24px;
+            }
+
+            .search-section,
+            .filter-section,
+            .content,
+            .footer {
+                padding: 20px;
+            }
+
+            .apps-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .admin-link {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Credential Modal -->
+    <div class="modal" id="credentialModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>
+                    <span id="modalAppIcon">🚀</span>
+                    <span id="modalAppName">Application</span>
+                </h2>
+                <button class="modal-close" onclick="appPortal.closeCredentialModal()">✕</button>
+            </div>
+            <div id="credentialContent"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon">MR</div>
+                    <div>
+                        <h1>Millennium Radius</h1>
+                        <p>Application Portal</p>
+                    </div>
+                </div>
+                <a href="admin-console.html" class="admin-link">⚙️ Admin Console</a>
+            </div>
+            <h2>🚀 All Your Applications in One Place</h2>
+            <p>Browse and launch your business applications</p>
+        </div>
+
+        <!-- Search Section -->
+        <div class="search-section">
+            <input 
+                type="text" 
+                class="search-input" 
+                id="searchInput"
+                placeholder="Search applications..."
+            >
+        </div>
+
+        <!-- Filter Section -->
+        <div class="filter-section" id="filterSection"></div>
+
+        <!-- Content -->
+        <div class="content">
+            <div class="result-count" id="resultCount"></div>
+            <div class="apps-grid" id="appsGrid"></div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>© 2024 Millennium Radius Sdn Bhd (517392-A) • Application Portal v2.0</p>
+        </div>
+    </div>
+
+    <script>
+        // Application Data Management
+        class AppPortal {
+            constructor() {
+                this.apps = [];
+                this.filteredApps = [];
+                this.selectedCategory = 'all';
+                this.searchTerm = '';
+                this.init();
+            }
+
+            init() {
+                this.loadApps();
+                this.setupEventListeners();
+                this.renderFilterTags();
+                this.filterApps();  // This populates this.filteredApps
+                this.renderApps();
+            }
+
+            loadApps() {
+                // Try to load from localStorage first
+                const stored = localStorage.getItem('millenniumRadiusApps');
+                if (stored) {
+                    try {
+                        this.apps = JSON.parse(stored);
+                    } catch (e) {
+                        console.error('Error parsing stored apps:', e);
+                        this.loadDefaultApps();
+                    }
+                } else {
+                    this.loadDefaultApps();
+                }
+            }
+
+            loadDefaultApps() {
+                // Default sample data
+                this.apps = [
+                    {
+                        id: 'app_cognisense_001',
+                        name: 'Cognisense',
+                        icon: '🧠',
+                        category: 'Core Systems',
+                        description: 'Unified platform for business intelligence',
+                        url: 'https://www.cognisense.my/poc/login.do',
+                        isActive: true
+                    },
+                    {
+                        id: 'app_ariims_001',
+                        name: 'ARIIMSv2',
+                        icon: '👥',
+                        category: 'CRM & Customer',
+                        description: 'Advanced customer relationship management',
+                        url: 'http://101.99.81.225:8080/ariimsv2/Account/LoginWithoutToken',
+                        isActive: true
+                    },
+                    {
+                        id: 'app_ysnet_001',
+                        name: 'YSNET',
+                        icon: '🌐',
+                        category: 'Integration',
+                        description: 'Network integration services',
+                        url: 'http://101.99.81.225:8082/Account/Start?ReturnUrl=%2f#',
+                        isActive: true
+                    },
+                    {
+                        id: 'app_hearts_001',
+                        name: 'Hearts & Minds',
+                        icon: '❤️',
+                        category: 'Learning',
+                        description: 'Employee development and training',
+                        url: 'http://101.99.81.225:8081',
+                        isActive: true
+                    },
+                    {
+                        id: 'app_ilms_001',
+                        name: 'ILMS',
+                        icon: '📚',
+                        category: 'Learning',
+                        description: 'Learning management system',
+                        url: 'https://ilms.milradius.com.my/app/#login',
+                        isActive: true
+                    },
+                    {
+                        id: 'app_eqra_001',
+                        name: 'Eqra',
+                        icon: '💰',
+                        category: 'Finance',
+                        description: 'Financial management system',
+                        url: 'http://101.99.81.225:7071/login',
+                        isActive: true
+                    },
+                    {
+                        id: 'app_neo4j_001',
+                        name: 'Neo4j',
+                        icon: '🔗',
+                        category: 'Analytics & Data',
+                        description: 'Graph database browser',
+                        url: 'http://101.99.81.225:7474/browser',
+                        isActive: true
+                    },
+                    {
+                        id: 'app_sk_analytics_001',
+                        name: 'SK Analytics',
+                        icon: '📊',
+                        category: 'Analytics & Data',
+                        description: 'Data analytics and reporting',
+                        url: 'https://ilms.milradius.com.my/sk_analytics/#login',
+                        isActive: true
+                    },
+                    {
+                        id: 'app_adams_001',
+                        name: 'Adams Plus',
+                        icon: '📋',
+                        category: 'CRM & Customer',
+                        description: 'Client management platform',
+                        url: 'http://101.99.81.225:7075/Login/Welcome',
+                        isActive: true
+                    },
+                    {
+                        id: 'app_mikro_001',
+                        name: 'Mikro Sayang',
+                        icon: '⚙️',
+                        category: 'Integration',
+                        description: 'System integration services',
+                        url: '#',
+                        isActive: false
+                    }
+                ];
+            }
+
+            setupEventListeners() {
+                document.getElementById('searchInput').addEventListener('input', (e) => {
+                    this.searchTerm = e.target.value.toLowerCase();
+                    this.filterApps();
+                });
+            }
+
+            getCategories() {
+                const cats = new Set(this.apps.map(app => app.category));
+                return [
+                    { id: 'all', label: 'All Apps', count: this.apps.filter(a => a.isActive).length },
+                    ...Array.from(cats).map(cat => ({
+                        id: cat.toLowerCase().replace(/\s+/g, '-'),
+                        label: cat,
+                        count: this.apps.filter(a => a.category === cat && a.isActive).length
+                    }))
+                ];
+            }
+
+            renderFilterTags() {
+                const filterSection = document.getElementById('filterSection');
+                filterSection.innerHTML = '';
+
+                this.getCategories().forEach(cat => {
+                    const tag = document.createElement('button');
+                    tag.className = `filter-tag ${cat.id === 'all' ? 'active' : ''}`;
+                    tag.textContent = `${cat.label} (${cat.count})`;
+                    tag.onclick = () => {
+                        document.querySelectorAll('.filter-tag').forEach(t => t.classList.remove('active'));
+                        tag.classList.add('active');
+                        this.selectedCategory = cat.id;
+                        this.filterApps();
+                    };
+                    filterSection.appendChild(tag);
+                });
+            }
+
+            filterApps() {
+                this.filteredApps = this.apps.filter(app => {
+                    const matchesSearch = app.name.toLowerCase().includes(this.searchTerm) ||
+                                        (app.description || '').toLowerCase().includes(this.searchTerm);
+                    const matchesCategory = this.selectedCategory === 'all' || 
+                                          app.category.toLowerCase().replace(/\s+/g, '-') === this.selectedCategory;
+                    return matchesSearch && matchesCategory && app.isActive;
+                });
+
+                this.renderApps();
+            }
+
+            renderApps() {
+                const grid = document.getElementById('appsGrid');
+                const resultCount = document.getElementById('resultCount');
+
+                resultCount.textContent = `${this.filteredApps.length} application${this.filteredApps.length !== 1 ? 's' : ''} available`;
+
+                if (this.filteredApps.length === 0) {
+                    grid.innerHTML = `
+                        <div style="grid-column: 1/-1;">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">🔍</div>
+                                <h3>No applications found</h3>
+                                <p>Try adjusting your search or filters</p>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                grid.innerHTML = this.filteredApps.map(app => `
+                    <div class="app-card ${app.isActive ? '' : 'disabled'}">
+                        <div class="app-card-header">
+                            <div></div>
+                            ${(app.username || app.password) ? `
+                                <button 
+                                    class="credential-icon" 
+                                    onclick="appPortal.showCredentials('${app.id}')"
+                                    title="View Credentials"
+                                >
+                                    🔑
+                                </button>
+                            ` : ''}
+                        </div>
+                        <div class="app-icon">${app.icon}</div>
+                        <div class="app-name">${app.name}</div>
+                        <div class="app-category">${app.category}</div>
+                        <div class="app-description">${app.description}</div>
+                        <div class="app-status">
+                            <div class="status-dot"></div>
+                            <span class="status-text">Active</span>
+                        </div>
+                        <button 
+                            class="app-launch-btn" 
+                            onclick="appPortal.launchApp('${app.url}')"
+                            ${!app.isActive ? 'disabled' : ''}
+                        >
+                            Launch App →
+                        </button>
+                    </div>
+                `).join('');
+            }
+
+            launchApp(url) {
+                if (url && url !== '#') {
+                    window.open(url, '_blank');
+                } else {
+                    alert('This application is not yet available');
+                }
+            }
+
+            showCredentials(appId) {
+                const app = this.apps.find(a => a.id === appId);
+                if (!app) return;
+
+                document.getElementById('modalAppIcon').textContent = app.icon;
+                document.getElementById('modalAppName').textContent = app.name;
+
+                let credentialHTML = '';
+
+                if (!app.username && !app.password) {
+                    credentialHTML = '<div class="no-credentials">No credentials configured</div>';
+                } else {
+                    if (app.username) {
+                        const masked = '*'.repeat(Math.min(app.username.length, 12));
+                        credentialHTML += `
+                            <div class="credential-item">
+                                <div class="credential-label">Username</div>
+                                <div class="credential-display">
+                                    <div class="credential-value">${this.escapeHtml(app.username)}</div>
+                                    <button class="copy-btn" onclick="appPortal.copyToClipboard('${app.username}', this)">Copy</button>
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    if (app.password) {
+                        const masked = '*'.repeat(Math.min(app.password.length, 12));
+                        credentialHTML += `
+                            <div class="credential-item">
+                                <div class="credential-label">Password</div>
+                                <div class="credential-display">
+                                    <div class="credential-value masked" id="passwordField-${appId}">${masked}</div>
+                                    <button class="copy-btn" onclick="appPortal.copyToClipboard('${app.password}', this)">Copy</button>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+
+                document.getElementById('credentialContent').innerHTML = credentialHTML;
+                document.getElementById('credentialModal').classList.add('show');
+            }
+
+            closeCredentialModal() {
+                document.getElementById('credentialModal').classList.remove('show');
+            }
+
+            copyToClipboard(text, button) {
+                navigator.clipboard.writeText(text).then(() => {
+                    const originalText = button.textContent;
+                    button.textContent = '✓ Copied!';
+                    button.classList.add('copied');
+
+                    setTimeout(() => {
+                        button.textContent = originalText;
+                        button.classList.remove('copied');
+                    }, 2000);
+                }).catch(err => {
+                    alert('Failed to copy: ' + err);
+                });
+            }
+
+            escapeHtml(text) {
+                const map = {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                };
+                return text.replace(/[&<>"']/g, m => map[m]);
+            }
+        }
+
+        // Initialize
+        const appPortal = new AppPortal();
+
+        // Close modal when clicking outside
+        document.getElementById('credentialModal').addEventListener('click', function(event) {
+            if (event.target === this) {
+                appPortal.closeCredentialModal();
+            }
+        });
+    </script>
+</body>
+</html>
