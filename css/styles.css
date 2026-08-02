@@ -678,6 +678,10 @@
             color: #8899bb;
             margin-bottom: 15px;
             flex-grow: 1;
+            display: -webkit-box;
+            -webkit-line-clamp: 8;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
 
         .card-footer {
@@ -1335,6 +1339,14 @@
             padding: 12px;
             border-bottom: 1px solid rgba(100, 150, 255, 0.1);
             color: #e0e6ff;
+        }
+
+        .description-cell {
+            max-width: 280px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            cursor: default;
         }
 
         tr:hover td {

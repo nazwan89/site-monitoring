@@ -268,7 +268,7 @@
                     <div class="card-icon">${app.icon}</div>
                     <div class="card-name">${app.name}</div>
                     <div class="card-categories">${app.categories.map(c => `<span class="card-category">${c}</span>`).join('')}</div>
-                    <div class="card-description">${app.description}</div>
+                    <div class="card-description" title="${app.description}">${app.description}</div>
                     <div class="card-footer">
                         ${app.isActive ? '<div class="active-badge">✓ Active</div>' : '<div class="inactive-badge">✕ Inactive</div>'}
                         <div class="card-actions">

@@ -391,7 +391,7 @@
                     <td class="icon-cell">${app.icon}</td>
                     <td><strong>${app.name}</strong></td>
                     <td>${app.categories.map(c => `<span class="category-tag">${c}</span>`).join('')}</td>
-                    <td>${app.description}</td>
+                    <td class="description-cell" title="${app.description}">${app.description}</td>
                     <td><a href="${app.url}" target="_blank" style="color: #64c8ff; text-decoration: none;">Open →</a></td>
                     <td><span class="status-badge ${app.isActive ? 'status-active' : 'status-inactive'}">${app.isActive ? '✓ Active' : '✗ Inactive'}</span></td>
                     <td>
