@@ -127,16 +127,9 @@
                     </div>
 
                     <div class="form-group-full">
-                        <label>Status *</label>
-                        <select id="isActive" required>
-                            <option value="true">Active</option>
-                            <option value="false">Inactive</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group-full">
                         <label>Application URL *</label>
                         <input type="url" id="url" placeholder="https://example.com" required>
+                        <p class="field-hint">Status is checked automatically — active/inactive is determined by whether this URL responds.</p>
                     </div>
 
                     <div class="form-group-full form-group-span">
@@ -197,16 +190,9 @@
                     </div>
 
                     <div class="form-group-full">
-                        <label>Status *</label>
-                        <select id="editIsActive" required>
-                            <option value="true">Active</option>
-                            <option value="false">Inactive</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group-full">
                         <label>Application URL *</label>
                         <input type="url" id="editUrl" required>
+                        <p class="field-hint">Status is checked automatically — active/inactive is determined by whether this URL responds.</p>
                     </div>
 
                     <div class="form-group-full form-group-span">
@@ -697,8 +683,7 @@
                 categories: categories,
                 description: document.getElementById('description').value,
                 url: document.getElementById('url').value,
-                credentials: credentials,
-                isActive: document.getElementById('isActive').value === 'true'
+                credentials: credentials
             };
 
             try {
@@ -745,7 +730,6 @@
             renderCategoryCheckboxes('editCategoryCheckboxes', 'editCategoryMultiselectText', app.categories);
             document.getElementById('editNewCategory').value = '';
             document.getElementById('editCategoryMultiselect').classList.remove('open');
-            document.getElementById('editIsActive').value = app.isActive;
             document.getElementById('editUrl').value = app.url;
             resetCredentialSets('editCredentialSets', app.credentials);
             document.getElementById('editDescription').value = app.description;
@@ -781,8 +765,7 @@
                 categories: categories,
                 description: document.getElementById('editDescription').value,
                 url: document.getElementById('editUrl').value,
-                credentials: credentials,
-                isActive: document.getElementById('editIsActive').value === 'true'
+                credentials: credentials
             };
 
             try {
@@ -837,12 +820,15 @@
         }
 
         // ==================== INITIALIZATION ====================
+        const STATUS_REFRESH_INTERVAL_MS = 30 * 1000;
+
         window.addEventListener('load', () => {
             const savedSessionId = localStorage.getItem('sessionId');
             if (savedSessionId) {
                 sessionId = savedSessionId;
                 document.getElementById('dashboardSection').classList.add('visible');
                 loadApplications();
+                setInterval(loadApplications, STATUS_REFRESH_INTERVAL_MS);
             } else {
                 window.location.href = 'login.html';
             }

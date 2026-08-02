@@ -1171,6 +1171,12 @@
             background: rgba(30, 40, 60, 0.8);
         }
 
+        .field-hint {
+            margin-top: 6px;
+            font-size: 12px;
+            color: #668899;
+        }
+
         .form-actions {
             display: flex;
             gap: 10px;

@@ -84,6 +84,7 @@
         let currentFiltered = [];
         let visibleCount = 0;
         const BATCH_SIZE = 12;
+        const STATUS_REFRESH_INTERVAL_MS = 30 * 1000;
 
         const lazyLoadObserver = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
@@ -115,6 +116,7 @@
 
             document.getElementById('portalSection').classList.add('visible');
             loadApplications();
+            setInterval(refreshApplicationsData, STATUS_REFRESH_INTERVAL_MS);
         });
 
         // ==================== AUTHENTICATION ====================
@@ -219,10 +221,10 @@
         }
 
         // ==================== FILTER APPLICATIONS ====================
-        function filterApps() {
+        function getFilteredApplications() {
             const searchText = document.getElementById('searchInput').value.toLowerCase();
             const statusValue = document.getElementById('statusFilter').value;
-            const filtered = applications.filter(app => {
+            return applications.filter(app => {
                 const matchesCategory = selectedCategory === 'All' || app.categories.includes(selectedCategory);
                 const matchesSearch = app.name.toLowerCase().includes(searchText) ||
                                     app.description.toLowerCase().includes(searchText);
@@ -231,10 +233,34 @@
                     (statusValue === 'inactive' && !app.isActive);
                 return matchesCategory && matchesSearch && matchesStatus;
             });
+        }
 
+        function filterApps() {
             visibleCount = BATCH_SIZE;
+            const filtered = getFilteredApplications();
             renderStats(filtered);
             renderApps(filtered);
+        }
+
+        // Background status refresh: re-fetches live isActive values without resetting
+        // search/filter/scroll state (unlike filterApps, which is for user-initiated changes).
+        async function refreshApplicationsData() {
+            try {
+                const response = await fetch('/data.json');
+                if (!response.ok) return;
+                const raw = await response.json();
+                applications = raw.map(app => ({
+                    ...app,
+                    categories: normalizeCategories(app),
+                    credentials: normalizeCredentials(app)
+                }));
+                renderFilterTabs();
+                const filtered = getFilteredApplications();
+                renderStats(filtered);
+                renderApps(filtered);
+            } catch (error) {
+                console.error('Error refreshing applications:', error);
+            }
         }
 
         // ==================== RENDER STATS ====================
