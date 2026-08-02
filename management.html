@@ -60,16 +60,26 @@
                 <div class="alert alert-success" id="successAlert"></div>
                 <div class="alert alert-error" id="errorAlert"></div>
 
+                <div class="search-box">
+                    <input
+                        type="text"
+                        class="search-input"
+                        id="tableSearchInput"
+                        placeholder="🔍 Search by name, category, or description..."
+                        onkeyup="renderTable()"
+                    >
+                </div>
+
                 <div class="table-wrapper">
                     <table>
                         <thead>
                             <tr>
                                 <th>Icon</th>
-                                <th>Name</th>
-                                <th>Category</th>
+                                <th class="sortable" onclick="setSort('name')">Name<span class="sort-icon" id="sort-name"></span></th>
+                                <th class="sortable" onclick="setSort('category')">Category<span class="sort-icon" id="sort-category"></span></th>
                                 <th>URL</th>
-                                <th>Username</th>
-                                <th>Status</th>
+                                <th class="sortable" onclick="setSort('description')">Description<span class="sort-icon" id="sort-description"></span></th>
+                                <th class="sortable" onclick="setSort('isActive')">Status<span class="sort-icon" id="sort-isActive"></span></th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -231,6 +241,8 @@
     <script>
         let applications = [];
         let sessionId = null;
+        let sortColumn = null;
+        let sortDirection = 'asc';
 
         // ==================== AUTHENTICATION ====================
         async function handleLogin(event) {
@@ -323,9 +335,52 @@
             }
         }
 
+        // ==================== FILTER & SORT ====================
+        function setSort(column) {
+            if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'asc';
+            }
+            renderTable();
+        }
+
+        function updateSortIndicators() {
+            document.querySelectorAll('.sortable .sort-icon').forEach(el => el.textContent = '');
+            if (sortColumn) {
+                const el = document.getElementById('sort-' + sortColumn);
+                if (el) el.textContent = sortDirection === 'asc' ? ' ▲' : ' ▼';
+            }
+        }
+
+        function getFilteredSortedApplications() {
+            const searchText = document.getElementById('tableSearchInput').value.toLowerCase();
+            const filtered = applications.filter(app =>
+                app.name.toLowerCase().includes(searchText) ||
+                app.category.toLowerCase().includes(searchText) ||
+                app.description.toLowerCase().includes(searchText)
+            );
+
+            if (sortColumn) {
+                filtered.sort((a, b) => {
+                    let valA = a[sortColumn];
+                    let valB = b[sortColumn];
+                    if (typeof valA === 'string') valA = valA.toLowerCase();
+                    if (typeof valB === 'string') valB = valB.toLowerCase();
+                    if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+                    if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+                    return 0;
+                });
+            }
+
+            return filtered;
+        }
+
         // ==================== RENDER TABLE ====================
         function renderTable() {
             const tbody = document.getElementById('applicationsTable');
+            updateSortIndicators();
 
             if (applications.length === 0) {
                 tbody.innerHTML = `
@@ -342,13 +397,30 @@
                 return;
             }
 
-            tbody.innerHTML = applications.map(app => `
+            const filtered = getFilteredSortedApplications();
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px;">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">🔍</div>
+                                <h2>No matching applications</h2>
+                                <p style="color: #668899;">Try a different search term</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(app => `
                 <tr>
                     <td class="icon-cell">${app.icon}</td>
                     <td><strong>${app.name}</strong></td>
                     <td>${app.category}</td>
                     <td><a href="${app.url}" target="_blank" style="color: #64c8ff; text-decoration: none;">Open →</a></td>
-                    <td>${app.username}</td>
+                    <td>${app.description}</td>
                     <td><span class="status-badge ${app.isActive ? 'status-active' : 'status-inactive'}">${app.isActive ? '✓ Active' : '✗ Inactive'}</span></td>
                     <td>
                         <div class="action-buttons">

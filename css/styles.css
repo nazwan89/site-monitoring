@@ -1175,6 +1175,20 @@
             border-bottom: 1px solid rgba(100, 150, 255, 0.2);
         }
 
+        th.sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        th.sortable:hover {
+            color: #64c8ff;
+        }
+
+        .sort-icon {
+            color: #64c8ff;
+            font-size: 11px;
+        }
+
         td {
             padding: 12px;
             border-bottom: 1px solid rgba(100, 150, 255, 0.1);
