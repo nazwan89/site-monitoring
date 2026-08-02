@@ -139,14 +139,10 @@
                         <input type="url" id="url" placeholder="https://example.com" required>
                     </div>
 
-                    <div class="form-group-full">
-                        <label>Username *</label>
-                        <input type="text" id="username" placeholder="user@company.com" required>
-                    </div>
-
-                    <div class="form-group-full">
-                        <label>Password *</label>
-                        <input type="password" id="password" placeholder="••••••••" required>
+                    <div class="form-group-full form-group-span">
+                        <label>Accounts / Credentials * (one or more)</label>
+                        <div class="credential-sets" id="credentialSets"></div>
+                        <button type="button" class="btn btn-neutral btn-small" onclick="addCredentialSet('credentialSets')">➕ Add Account</button>
                     </div>
 
                     <div class="form-group-full">
@@ -213,14 +209,10 @@
                         <input type="url" id="editUrl" required>
                     </div>
 
-                    <div class="form-group-full">
-                        <label>Username *</label>
-                        <input type="text" id="editUsername" required>
-                    </div>
-
-                    <div class="form-group-full">
-                        <label>Password *</label>
-                        <input type="password" id="editPassword" required>
+                    <div class="form-group-full form-group-span">
+                        <label>Accounts / Credentials * (one or more)</label>
+                        <div class="credential-sets" id="editCredentialSets"></div>
+                        <button type="button" class="btn btn-neutral btn-small" onclick="addCredentialSet('editCredentialSets')">➕ Add Account</button>
                     </div>
 
                     <div class="form-group-full">
@@ -271,12 +263,37 @@
             return [];
         }
 
+        function normalizeCredentials(app) {
+            if (Array.isArray(app.credentials) && app.credentials.length) return app.credentials;
+            if (app.username || app.password) {
+                return [{
+                    label: 'Default',
+                    username: app.username || '',
+                    password: app.password || '',
+                    extraFields: []
+                }];
+            }
+            return [];
+        }
+
+        function escapeAttr(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/"/g, '&quot;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+        }
+
         async function loadApplications() {
             try {
                 const response = await fetch('/data.json');
                 if (!response.ok) throw new Error('Failed to load data');
                 const raw = await response.json();
-                applications = raw.map(app => ({ ...app, categories: normalizeCategories(app) }));
+                applications = raw.map(app => ({
+                    ...app,
+                    categories: normalizeCategories(app),
+                    credentials: normalizeCredentials(app)
+                }));
                 renderTable();
             } catch (error) {
                 showAlert('error', '❌ Error loading applications: ' + error.message);
@@ -518,6 +535,84 @@
             });
         });
 
+        // ==================== CREDENTIALS BUILDER ====================
+        function addCredentialSet(containerId, data = {}) {
+            const container = document.getElementById(containerId);
+            const set = document.createElement('div');
+            set.className = 'credential-set';
+            set.innerHTML = `
+                <div class="credential-set-header">
+                    <input type="text" class="cred-label" placeholder="Account label (e.g., Super Admin) *" value="${escapeAttr(data.label || '')}" required>
+                    <button type="button" class="icon-btn btn-delete" onclick="removeCredentialSet(this)" title="Remove account">🗑️</button>
+                </div>
+                <div class="credential-set-row">
+                    <input type="text" class="cred-username" placeholder="Username *" value="${escapeAttr(data.username || '')}" required>
+                    <input type="text" class="cred-password" placeholder="Password *" value="${escapeAttr(data.password || '')}" required>
+                </div>
+                <div class="extra-fields"></div>
+                <button type="button" class="btn btn-neutral btn-small" onclick="addExtraField(this)">➕ Add Info Field</button>
+            `;
+            container.appendChild(set);
+
+            const extraFieldsContainer = set.querySelector('.extra-fields');
+            (data.extraFields || []).forEach(field => addExtraFieldRow(extraFieldsContainer, field));
+        }
+
+        function removeCredentialSet(btn) {
+            const container = btn.closest('.credential-sets');
+            if (container.querySelectorAll('.credential-set').length <= 1) {
+                showAlert('error', '❌ At least one account is required');
+                return;
+            }
+            btn.closest('.credential-set').remove();
+        }
+
+        function addExtraField(btn) {
+            const container = btn.previousElementSibling;
+            addExtraFieldRow(container, {});
+        }
+
+        function addExtraFieldRow(container, field = {}) {
+            const row = document.createElement('div');
+            row.className = 'extra-field-row';
+            row.innerHTML = `
+                <input type="text" class="extra-key" placeholder="Field name (e.g., Account ID)" value="${escapeAttr(field.key || '')}">
+                <input type="text" class="extra-value" placeholder="Value" value="${escapeAttr(field.value || '')}">
+                <label class="mask-toggle"><input type="checkbox" class="extra-masked" ${field.masked ? 'checked' : ''}> Mask</label>
+                <button type="button" class="icon-btn btn-delete" onclick="this.closest('.extra-field-row').remove()" title="Remove field">✕</button>
+            `;
+            container.appendChild(row);
+        }
+
+        function resetCredentialSets(containerId, sets) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            if (sets && sets.length) {
+                sets.forEach(cred => addCredentialSet(containerId, cred));
+            } else {
+                addCredentialSet(containerId);
+            }
+        }
+
+        function getCredentialSets(containerId) {
+            return Array.from(document.querySelectorAll(`#${containerId} .credential-set`)).map(setEl => {
+                const extraFields = Array.from(setEl.querySelectorAll('.extra-field-row'))
+                    .map(row => ({
+                        key: row.querySelector('.extra-key').value.trim(),
+                        value: row.querySelector('.extra-value').value,
+                        masked: row.querySelector('.extra-masked').checked
+                    }))
+                    .filter(f => f.key);
+
+                return {
+                    label: setEl.querySelector('.cred-label').value.trim(),
+                    username: setEl.querySelector('.cred-username').value.trim(),
+                    password: setEl.querySelector('.cred-password').value,
+                    extraFields
+                };
+            });
+        }
+
         // ==================== ADD APPLICATION ====================
         async function addApplication(event) {
             event.preventDefault();
@@ -528,6 +623,12 @@
                 return;
             }
 
+            const credentials = getCredentialSets('credentialSets');
+            if (credentials.length === 0) {
+                showAlert('error', '❌ Please add at least one account');
+                return;
+            }
+
             const newApp = {
                 id: Math.max(...applications.map(a => a.id), 0) + 1,
                 name: document.getElementById('name').value,
@@ -535,8 +636,7 @@
                 categories: categories,
                 description: document.getElementById('description').value,
                 url: document.getElementById('url').value,
-                username: document.getElementById('username').value,
-                password: document.getElementById('password').value,
+                credentials: credentials,
                 isActive: document.getElementById('isActive').value === 'true'
             };
 
@@ -564,6 +664,7 @@
             renderCategoryCheckboxes('categoryCheckboxes', 'categoryMultiselectText');
             document.getElementById('newCategory').value = '';
             document.getElementById('categoryMultiselect').classList.remove('open');
+            resetCredentialSets('credentialSets');
             document.getElementById('addModal').classList.add('show');
         }
 
@@ -585,8 +686,7 @@
             document.getElementById('editCategoryMultiselect').classList.remove('open');
             document.getElementById('editIsActive').value = app.isActive;
             document.getElementById('editUrl').value = app.url;
-            document.getElementById('editUsername').value = app.username;
-            document.getElementById('editPassword').value = app.password;
+            resetCredentialSets('editCredentialSets', app.credentials);
             document.getElementById('editDescription').value = app.description;
 
             document.getElementById('editModal').classList.add('show');
@@ -606,6 +706,12 @@
                 return;
             }
 
+            const credentials = getCredentialSets('editCredentialSets');
+            if (credentials.length === 0) {
+                showAlert('error', '❌ Please add at least one account');
+                return;
+            }
+
             const id = parseInt(document.getElementById('editId').value);
             const updatedApp = {
                 id: id,
@@ -614,8 +720,7 @@
                 categories: categories,
                 description: document.getElementById('editDescription').value,
                 url: document.getElementById('editUrl').value,
-                username: document.getElementById('editUsername').value,
-                password: document.getElementById('editPassword').value,
+                credentials: credentials,
                 isActive: document.getElementById('editIsActive').value === 'true'
             };
 

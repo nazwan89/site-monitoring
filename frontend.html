@@ -72,33 +72,7 @@
             <button class="modal-close" onclick="closeModal()">✕</button>
             <div class="modal-title" id="modalTitle"></div>
 
-            <div class="credential-row">
-                <div class="credential-label">URL</div>
-                <div class="credential-value">
-                    <span class="credential-text" id="urlValue"></span>
-                    <span class="copy-icon" onclick="copyToClipboard('urlValue')">📋</span>
-                    <span class="copy-feedback" id="urlFeedback">✓ Copied!</span>
-                </div>
-            </div>
-
-            <div class="credential-row">
-                <div class="credential-label">Username</div>
-                <div class="credential-value">
-                    <span class="credential-text" id="usernameValue"></span>
-                    <span class="copy-icon" onclick="copyToClipboard('usernameValue')">📋</span>
-                    <span class="copy-feedback" id="usernameFeedback">✓ Copied!</span>
-                </div>
-            </div>
-
-            <div class="credential-row">
-                <div class="credential-label">Password</div>
-                <div class="credential-value">
-                    <span class="credential-text" id="passwordValue"></span>
-                    <button class="pwd-toggle" id="pwdToggle" onclick="togglePassword()">👁️</button>
-                    <span class="copy-icon" onclick="copyPassword()">📋</span>
-                    <span class="copy-feedback" id="passwordFeedback">✓ Copied!</span>
-                </div>
-            </div>
+            <div id="credentialFieldsDisplay"></div>
         </div>
     </div>
 
@@ -106,7 +80,6 @@
         let applications = [];
         let sessionId = null;
         let isAdminUser = false;
-        let currentPassword = null;
         let currentFiltered = [];
         let visibleCount = 0;
         const BATCH_SIZE = 12;
@@ -176,12 +149,37 @@
             return [];
         }
 
+        function normalizeCredentials(app) {
+            if (Array.isArray(app.credentials) && app.credentials.length) return app.credentials;
+            if (app.username || app.password) {
+                return [{
+                    label: 'Default',
+                    username: app.username || '',
+                    password: app.password || '',
+                    extraFields: []
+                }];
+            }
+            return [];
+        }
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
         async function loadApplications() {
             try {
                 const response = await fetch('/data.json');
                 if (!response.ok) throw new Error('Failed to load data');
                 const raw = await response.json();
-                applications = raw.map(app => ({ ...app, categories: normalizeCategories(app) }));
+                applications = raw.map(app => ({
+                    ...app,
+                    categories: normalizeCategories(app),
+                    credentials: normalizeCredentials(app)
+                }));
                 lazyLoadObserver.observe(document.getElementById('scrollSentinel'));
                 renderFilterTabs();
                 renderStats();
@@ -272,8 +270,8 @@
                     <div class="card-footer">
                         ${app.isActive ? '<div class="active-badge">✓ Active</div>' : '<div class="inactive-badge">✕ Inactive</div>'}
                         <div class="card-actions">
-                            <button class="icon-btn copy-btn" 
-                                    onclick="${app.isActive ? `showCredentials(${app.id}, '${app.name}', '${app.username}', '${app.password}')` : 'return false;'}"
+                            <button class="icon-btn copy-btn"
+                                    onclick="${app.isActive ? `showCredentials(${app.id})` : 'return false;'}"
                                     ${!app.isActive ? 'disabled' : ''}
                                     title="${!app.isActive ? 'This app is inactive' : 'View credentials'}">🔑</button>
                         </div>
@@ -300,52 +298,65 @@
         }
 
         // ==================== CREDENTIALS MODAL ====================
-        function showCredentials(id, name, username, password) {
-            document.getElementById('modalTitle').textContent = `${name} Credentials`;
-            document.getElementById('urlValue').textContent = applications.find(a => a.id === id)?.url || '';
-            document.getElementById('usernameValue').textContent = username;
-            document.getElementById('passwordValue').textContent = maskPassword(password);
-            currentPassword = password;
-            document.getElementById('pwdToggle').textContent = '👁️';
+        function maskValue(value) {
+            return '*'.repeat(String(value).length);
+        }
+
+        function renderFieldRow(label, value, masked, fieldId) {
+            const displayValue = masked ? maskValue(value) : escapeHtml(value);
+            return `
+                <div class="credential-row">
+                    <div class="credential-label">${escapeHtml(label)}</div>
+                    <div class="credential-value">
+                        <span class="credential-text" id="field-${fieldId}" data-real="${escapeHtml(value)}" data-revealed="${!masked}">${displayValue}</span>
+                        ${masked ? `<button class="pwd-toggle" onclick="toggleFieldMask('field-${fieldId}')">👁️</button>` : ''}
+                        <span class="copy-icon" onclick="copyFieldValue('field-${fieldId}')">📋</span>
+                        <span class="copy-feedback" id="feedback-${fieldId}">✓ Copied!</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderCredentialSetDisplay(cred, idx) {
+            let html = `<div class="credential-set-label">${escapeHtml(cred.label)}</div>`;
+            html += renderFieldRow('Username', cred.username, false, `user-${idx}`);
+            html += renderFieldRow('Password', cred.password, true, `pass-${idx}`);
+            cred.extraFields.forEach((field, fieldIdx) => {
+                html += renderFieldRow(field.key, field.value, field.masked, `extra-${idx}-${fieldIdx}`);
+            });
+            return html;
+        }
+
+        function showCredentials(id) {
+            const app = applications.find(a => a.id === id);
+            if (!app) return;
+
+            document.getElementById('modalTitle').textContent = `${app.name} Credentials`;
+
+            let html = renderFieldRow('URL', app.url, false, 'url');
+            html += app.credentials.map((cred, idx) => renderCredentialSetDisplay(cred, idx)).join('');
+
+            document.getElementById('credentialFieldsDisplay').innerHTML = html;
             document.getElementById('credentialsModal').classList.add('show');
         }
 
         function closeModal() {
             document.getElementById('credentialsModal').classList.remove('show');
-            currentPassword = null;
         }
 
-        function maskPassword(password) {
-            return '*'.repeat(password.length);
+        function toggleFieldMask(elId) {
+            const el = document.getElementById(elId);
+            const real = el.dataset.real;
+            const revealed = el.dataset.revealed === 'true';
+            el.textContent = revealed ? maskValue(real) : real;
+            el.dataset.revealed = String(!revealed);
         }
 
-        function togglePassword() {
-            const pwdElement = document.getElementById('passwordValue');
-            const toggle = document.getElementById('pwdToggle');
-
-            if (pwdElement.textContent.includes('*')) {
-                pwdElement.textContent = currentPassword;
-                toggle.textContent = '🙈';
-            } else {
-                pwdElement.textContent = maskPassword(currentPassword);
-                toggle.textContent = '👁️';
-            }
-        }
-
-        function copyToClipboard(elementId) {
-            const element = document.getElementById(elementId);
-            const text = element.textContent;
-            navigator.clipboard.writeText(text).then(() => {
-                const feedbackId = elementId.replace('Value', 'Feedback');
+        function copyFieldValue(elId) {
+            const el = document.getElementById(elId);
+            navigator.clipboard.writeText(el.dataset.real).then(() => {
+                const feedbackId = elId.replace('field-', 'feedback-');
                 const feedback = document.getElementById(feedbackId);
-                feedback.classList.add('show');
-                setTimeout(() => feedback.classList.remove('show'), 2000);
-            });
-        }
-
-        function copyPassword() {
-            navigator.clipboard.writeText(currentPassword).then(() => {
-                const feedback = document.getElementById('passwordFeedback');
                 feedback.classList.add('show');
                 setTimeout(() => feedback.classList.remove('show'), 2000);
             });
