@@ -547,6 +547,15 @@
             animation: fadeIn 0.6s ease-out 0.3s both;
         }
 
+        .scroll-sentinel {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            color: #8899bb;
+            font-size: 14px;
+        }
+
         @keyframes fadeIn {
             from {
                 opacity: 0;

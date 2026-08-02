@@ -53,6 +53,10 @@
                         <h2>Loading applications...</h2>
                     </div>
                 </div>
+
+                <div class="scroll-sentinel" id="scrollSentinel">
+                    <span>⏳ Loading more applications...</span>
+                </div>
             </div>
         </div>
     </div>
@@ -98,6 +102,17 @@
         let sessionId = null;
         let isAdminUser = false;
         let currentPassword = null;
+        let currentFiltered = [];
+        let visibleCount = 0;
+        const BATCH_SIZE = 12;
+
+        const lazyLoadObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    loadMoreApps();
+                }
+            });
+        }, { rootMargin: '200px' });
 
         // ==================== INITIALIZATION ====================
         window.addEventListener('load', async () => {
@@ -155,8 +170,10 @@
                 const response = await fetch('/data.json');
                 if (!response.ok) throw new Error('Failed to load data');
                 applications = await response.json();
+                lazyLoadObserver.observe(document.getElementById('scrollSentinel'));
                 renderFilterTabs();
                 renderStats();
+                visibleCount = BATCH_SIZE;
                 renderApps();
             } catch (error) {
                 console.error('Error loading applications:', error);
@@ -193,11 +210,12 @@
             const searchText = document.getElementById('searchInput').value.toLowerCase();
             const filtered = applications.filter(app => {
                 const matchesCategory = selectedCategory === 'All' || app.category === selectedCategory;
-                const matchesSearch = app.name.toLowerCase().includes(searchText) || 
+                const matchesSearch = app.name.toLowerCase().includes(searchText) ||
                                     app.description.toLowerCase().includes(searchText);
                 return matchesCategory && matchesSearch;
             });
 
+            visibleCount = BATCH_SIZE;
             renderStats(filtered);
             renderApps(filtered);
         }
@@ -210,6 +228,7 @@
 
         // ==================== RENDER APPLICATIONS ====================
         function renderApps(filtered = applications) {
+            currentFiltered = filtered;
             const grid = document.getElementById('applicationsGrid');
 
             if (filtered.length === 0) {
@@ -222,10 +241,13 @@
                         </div>
                     </div>
                 `;
+                toggleSentinel(false);
                 return;
             }
 
-            grid.innerHTML = filtered.map(app => `
+            const visibleApps = filtered.slice(0, visibleCount);
+
+            grid.innerHTML = visibleApps.map(app => `
                 <div class="app-card ${!app.isActive ? 'inactive-card' : ''}">
                     <div class="card-icon">${app.icon}</div>
                     <div class="card-name">${app.name}</div>
@@ -240,12 +262,25 @@
                                     title="${!app.isActive ? 'This app is inactive' : 'View credentials'}">🔑</button>
                         </div>
                     </div>
-                    <button class="launch-btn" 
+                    <button class="launch-btn"
                             onclick="${app.isActive ? `window.open('${app.url}', '_blank')` : 'return false;'}"
                             ${!app.isActive ? 'disabled' : ''}
                             title="${!app.isActive ? 'This app is inactive' : 'Launch application'}">🚀 Launch App</button>
                 </div>
             `).join('');
+
+            toggleSentinel(visibleCount < filtered.length);
+        }
+
+        // ==================== LAZY LOADING ====================
+        function toggleSentinel(show) {
+            document.getElementById('scrollSentinel').style.display = show ? 'flex' : 'none';
+        }
+
+        function loadMoreApps() {
+            if (visibleCount >= currentFiltered.length) return;
+            visibleCount += BATCH_SIZE;
+            renderApps(currentFiltered);
         }
 
         // ==================== CREDENTIALS MODAL ====================
