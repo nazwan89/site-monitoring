@@ -298,17 +298,26 @@
         }
 
         // ==================== CREDENTIALS MODAL ====================
-        function maskValue(value) {
-            return '*'.repeat(String(value).length);
+        const MASK_PLACEHOLDER = '••••••••';
+
+        async function decryptOnServer(value) {
+            const response = await fetch(`/api/decrypt?sessionId=${sessionId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ value })
+            });
+            if (!response.ok) throw new Error('Failed to decrypt');
+            const data = await response.json();
+            return data.value;
         }
 
         function renderFieldRow(label, value, masked, fieldId) {
-            const displayValue = masked ? maskValue(value) : escapeHtml(value);
+            const displayValue = masked ? MASK_PLACEHOLDER : escapeHtml(value);
             return `
                 <div class="credential-row">
                     <div class="credential-label">${escapeHtml(label)}</div>
                     <div class="credential-value">
-                        <span class="credential-text" id="field-${fieldId}" data-real="${escapeHtml(value)}" data-revealed="${!masked}">${displayValue}</span>
+                        <span class="credential-text" id="field-${fieldId}" data-value="${escapeHtml(value)}" data-masked="${masked}" data-revealed="false">${displayValue}</span>
                         ${masked ? `<button class="pwd-toggle" onclick="toggleFieldMask('field-${fieldId}')">👁️</button>` : ''}
                         <span class="copy-icon" onclick="copyFieldValue('field-${fieldId}')">📋</span>
                         <span class="copy-feedback" id="feedback-${fieldId}">✓ Copied!</span>
@@ -344,22 +353,45 @@
             document.getElementById('credentialsModal').classList.remove('show');
         }
 
-        function toggleFieldMask(elId) {
-            const el = document.getElementById(elId);
-            const real = el.dataset.real;
-            const revealed = el.dataset.revealed === 'true';
-            el.textContent = revealed ? maskValue(real) : real;
-            el.dataset.revealed = String(!revealed);
+        async function getRealValue(el) {
+            if (el.dataset.masked !== 'true') return el.dataset.value;
+            if (el.dataset.decrypted !== undefined) return el.dataset.decrypted;
+            const real = await decryptOnServer(el.dataset.value);
+            el.dataset.decrypted = real;
+            return real;
         }
 
-        function copyFieldValue(elId) {
+        async function toggleFieldMask(elId) {
             const el = document.getElementById(elId);
-            navigator.clipboard.writeText(el.dataset.real).then(() => {
+            const revealed = el.dataset.revealed === 'true';
+
+            if (revealed) {
+                el.textContent = MASK_PLACEHOLDER;
+                el.dataset.revealed = 'false';
+                return;
+            }
+
+            try {
+                el.textContent = await getRealValue(el);
+                el.dataset.revealed = 'true';
+            } catch (error) {
+                console.error('Decrypt failed:', error);
+                el.textContent = '⚠️ Error decrypting';
+            }
+        }
+
+        async function copyFieldValue(elId) {
+            const el = document.getElementById(elId);
+            try {
+                const real = await getRealValue(el);
+                await navigator.clipboard.writeText(real);
                 const feedbackId = elId.replace('field-', 'feedback-');
                 const feedback = document.getElementById(feedbackId);
                 feedback.classList.add('show');
                 setTimeout(() => feedback.classList.remove('show'), 2000);
-            });
+            } catch (error) {
+                console.error('Copy failed:', error);
+            }
         }
 
         // ==================== KEYBOARD SHORTCUTS ====================

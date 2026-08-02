@@ -536,10 +536,65 @@
         });
 
         // ==================== CREDENTIALS BUILDER ====================
+        async function decryptOnServer(value) {
+            const response = await fetch(`/api/decrypt?sessionId=${sessionId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ value })
+            });
+            if (!response.ok) throw new Error('Failed to decrypt');
+            const data = await response.json();
+            return data.value;
+        }
+
+        // Shared by the password input and any masked extra-field value input:
+        // decrypts the stored value on first click (if it was loaded encrypted), then just
+        // toggles visibility on subsequent clicks.
+        async function revealCredentialField(btn) {
+            const input = btn.previousElementSibling;
+            if (input.dataset.encrypted === 'true') {
+                try {
+                    input.value = await decryptOnServer(input.value);
+                    input.dataset.encrypted = 'false';
+                } catch (error) {
+                    console.error('Decrypt failed:', error);
+                    showAlert('error', '❌ Failed to decrypt value');
+                    return;
+                }
+            }
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+
+        async function handleMaskToggle(checkbox) {
+            const row = checkbox.closest('.extra-field-row');
+            const input = row.querySelector('.extra-value');
+            const revealBtn = row.querySelector('.reveal-btn');
+
+            if (checkbox.checked) {
+                input.type = 'password';
+                revealBtn.style.display = '';
+            } else {
+                if (input.dataset.encrypted === 'true') {
+                    try {
+                        input.value = await decryptOnServer(input.value);
+                        input.dataset.encrypted = 'false';
+                    } catch (error) {
+                        console.error('Decrypt failed:', error);
+                        showAlert('error', '❌ Failed to decrypt value');
+                        checkbox.checked = true;
+                        return;
+                    }
+                }
+                input.type = 'text';
+                revealBtn.style.display = 'none';
+            }
+        }
+
         function addCredentialSet(containerId, data = {}) {
             const container = document.getElementById(containerId);
             const set = document.createElement('div');
             set.className = 'credential-set';
+            const isPasswordEncrypted = !!data.password;
             set.innerHTML = `
                 <div class="credential-set-header">
                     <input type="text" class="cred-label" placeholder="Account label (e.g., Super Admin) *" value="${escapeAttr(data.label || '')}" required>
@@ -547,7 +602,10 @@
                 </div>
                 <div class="credential-set-row">
                     <input type="text" class="cred-username" placeholder="Username *" value="${escapeAttr(data.username || '')}" required>
-                    <input type="text" class="cred-password" placeholder="Password *" value="${escapeAttr(data.password || '')}" required>
+                    <div class="password-field-wrapper">
+                        <input type="password" class="cred-password" placeholder="Password *" value="${escapeAttr(data.password || '')}" data-encrypted="${isPasswordEncrypted}" required>
+                        <button type="button" class="icon-btn reveal-btn" onclick="revealCredentialField(this)" title="Show/hide password">👁️</button>
+                    </div>
                 </div>
                 <div class="extra-fields"></div>
                 <button type="button" class="btn btn-neutral btn-small" onclick="addExtraField(this)">➕ Add Info Field</button>
@@ -575,10 +633,13 @@
         function addExtraFieldRow(container, field = {}) {
             const row = document.createElement('div');
             row.className = 'extra-field-row';
+            const masked = !!field.masked;
+            const isEncrypted = masked && !!field.value;
             row.innerHTML = `
                 <input type="text" class="extra-key" placeholder="Field name (e.g., Account ID)" value="${escapeAttr(field.key || '')}">
-                <input type="text" class="extra-value" placeholder="Value" value="${escapeAttr(field.value || '')}">
-                <label class="mask-toggle"><input type="checkbox" class="extra-masked" ${field.masked ? 'checked' : ''}> Mask</label>
+                <input type="${masked ? 'password' : 'text'}" class="extra-value" placeholder="Value" value="${escapeAttr(field.value || '')}" data-encrypted="${isEncrypted}">
+                <button type="button" class="icon-btn reveal-btn" onclick="revealCredentialField(this)" title="Show/hide value" style="${masked ? '' : 'display:none;'}">👁️</button>
+                <label class="mask-toggle"><input type="checkbox" class="extra-masked" ${masked ? 'checked' : ''} onchange="handleMaskToggle(this)"> Mask</label>
                 <button type="button" class="icon-btn btn-delete" onclick="this.closest('.extra-field-row').remove()" title="Remove field">✕</button>
             `;
             container.appendChild(row);

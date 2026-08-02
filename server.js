@@ -2,11 +2,59 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const url = require('url');
+const crypto = require('crypto');
 
 const PORT = process.env.PORT || 3000;
 const DATA_FILE = path.join(__dirname, 'data.json');
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
 const PORTAL_PASSWORD = process.env.PORTAL_PASSWORD || 'portal123';
+
+// ==================== ENCRYPTION ====================
+if (!process.env.ENCRYPTION_KEY) {
+    console.warn('⚠️  ENCRYPTION_KEY not set — using an insecure default. Set ENCRYPTION_KEY in production.');
+}
+const ENCRYPTION_KEY = crypto.createHash('sha256')
+    .update(process.env.ENCRYPTION_KEY || 'dev-only-insecure-default-key-change-me')
+    .digest();
+const ENC_PREFIX = 'enc:';
+
+function encryptValue(value) {
+    if (value === undefined || value === null || value === '') return value;
+    if (typeof value === 'string' && value.startsWith(ENC_PREFIX)) return value; // already encrypted
+
+    const iv = crypto.randomBytes(12);
+    const cipher = crypto.createCipheriv('aes-256-gcm', ENCRYPTION_KEY, iv);
+    const ciphertext = Buffer.concat([cipher.update(String(value), 'utf8'), cipher.final()]);
+    const authTag = cipher.getAuthTag();
+    return ENC_PREFIX + Buffer.concat([iv, authTag, ciphertext]).toString('base64');
+}
+
+function decryptValue(value) {
+    if (typeof value !== 'string' || !value.startsWith(ENC_PREFIX)) return value; // legacy plaintext passthrough
+
+    try {
+        const raw = Buffer.from(value.slice(ENC_PREFIX.length), 'base64');
+        const iv = raw.subarray(0, 12);
+        const authTag = raw.subarray(12, 28);
+        const ciphertext = raw.subarray(28);
+        const decipher = crypto.createDecipheriv('aes-256-gcm', ENCRYPTION_KEY, iv);
+        decipher.setAuthTag(authTag);
+        return Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString('utf8');
+    } catch (error) {
+        console.error('Decryption failed:', error.message);
+        return null;
+    }
+}
+
+function encryptCredentials(credentials) {
+    return (credentials || []).map(cred => ({
+        ...cred,
+        password: encryptValue(cred.password),
+        extraFields: (cred.extraFields || []).map(field =>
+            field.masked ? { ...field, value: encryptValue(field.value) } : field
+        )
+    }));
+}
 
 // ==================== SESSION MANAGEMENT ====================
 const sessions = {
@@ -255,6 +303,35 @@ const server = http.createServer((req, res) => {
         return;
     }
 
+    // POST /api/decrypt - Decrypt a masked credential value (admin or portal)
+    if (pathname === '/api/decrypt' && req.method === 'POST') {
+        const sessionId = query.sessionId;
+
+        if (!requireAuth(sessionId, 'admin') && !requireAuth(sessionId, 'portal')) {
+            res.writeHead(401, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Unauthorized' }));
+            return;
+        }
+
+        let body = '';
+
+        req.on('data', chunk => {
+            body += chunk.toString();
+        });
+
+        req.on('end', () => {
+            try {
+                const { value } = JSON.parse(body);
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ value: decryptValue(value) }));
+            } catch (error) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: error.message }));
+            }
+        });
+        return;
+    }
+
     // ==================== APPLICATIONS API ====================
 
     // GET /api/applications
@@ -293,7 +370,8 @@ const server = http.createServer((req, res) => {
                     return;
                 }
 
-                // Add new app
+                // Add new app (masked credential values are encrypted at rest)
+                newApp.credentials = encryptCredentials(newApp.credentials);
                 applications.push(newApp);
 
                 if (writeData(applications)) {
@@ -341,6 +419,9 @@ const server = http.createServer((req, res) => {
                     return;
                 }
 
+                if (updatedApp.credentials) {
+                    updatedApp.credentials = encryptCredentials(updatedApp.credentials);
+                }
                 applications[index] = { ...applications[index], ...updatedApp, id: id };
 
                 if (writeData(applications)) {

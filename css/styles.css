@@ -1373,6 +1373,22 @@
             box-shadow: 0 0 0 3px rgba(100, 200, 255, 0.1);
         }
 
+        .password-field-wrapper {
+            display: flex;
+            gap: 6px;
+        }
+
+        .password-field-wrapper input {
+            flex: 1;
+        }
+
+        .reveal-btn {
+            width: 32px;
+            height: 32px;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
         .extra-fields {
             display: flex;
             flex-direction: column;
@@ -1382,7 +1398,7 @@
 
         .extra-field-row {
             display: grid;
-            grid-template-columns: 1fr 1fr auto auto;
+            grid-template-columns: 1fr 1fr auto auto auto;
             gap: 8px;
             align-items: center;
         }
