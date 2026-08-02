@@ -24,7 +24,8 @@
                     </div>
                     <div class="header-actions">
                         <a id="adminLink" href="management.html" class="admin-console-btn" style="display: none;">⚙️ Admin Console</a>
-                        <button class="logout-btn" onclick="handleLogout()">🚪 Logout</button>
+                        <a id="loginLink" href="login.html" class="admin-console-btn" style="display: none;">🔑 Login</a>
+                        <button class="logout-btn" id="logoutBtn" onclick="handleLogout()">🚪 Logout</button>
                     </div>
                 </div>
 
@@ -95,31 +96,25 @@
         // ==================== INITIALIZATION ====================
         window.addEventListener('load', async () => {
             const adminSessionId = localStorage.getItem('sessionId');
+            const portalSessionId = localStorage.getItem('portalSessionId');
+
             if (adminSessionId) {
                 isAdminUser = true;
                 sessionId = adminSessionId;
-
-                document.getElementById('portalSection').classList.add('visible');
                 document.getElementById('adminLink').style.display = 'inline-block';
                 document.getElementById('userTypeIndicator').textContent = '👤 Admin User (Full Access)';
-
-                loadApplications();
-                return;
-            }
-
-            const portalSessionId = localStorage.getItem('portalSessionId');
-            if (portalSessionId) {
+            } else if (portalSessionId) {
                 isAdminUser = false;
                 sessionId = portalSessionId;
-
-                document.getElementById('portalSection').classList.add('visible');
                 document.getElementById('userTypeIndicator').textContent = '👤 Portal User';
-
-                loadApplications();
-                return;
+            } else {
+                document.getElementById('userTypeIndicator').textContent = '👀 Browsing — login to view credentials';
+                document.getElementById('loginLink').style.display = 'inline-block';
+                document.getElementById('logoutBtn').style.display = 'none';
             }
 
-            window.location.href = 'login.html';
+            document.getElementById('portalSection').classList.add('visible');
+            loadApplications();
         });
 
         // ==================== AUTHENTICATION ====================
@@ -139,7 +134,15 @@
 
             localStorage.removeItem('portalSessionId');
             localStorage.removeItem('sessionId');
-            window.location.href = 'login.html';
+            window.location.href = 'frontend.html';
+        }
+
+        function requireLoginFor(action) {
+            if (!sessionId) {
+                window.location.href = 'login.html';
+                return;
+            }
+            action();
         }
 
         // ==================== LOAD APPLICATIONS ====================
@@ -271,7 +274,7 @@
                         ${app.isActive ? '<div class="active-badge">✓ Active</div>' : '<div class="inactive-badge">✕ Inactive</div>'}
                         <div class="card-actions">
                             <button class="icon-btn copy-btn"
-                                    onclick="${app.isActive ? `showCredentials(${app.id})` : 'return false;'}"
+                                    onclick="${app.isActive ? `requireLoginFor(() => showCredentials(${app.id}))` : 'return false;'}"
                                     ${!app.isActive ? 'disabled' : ''}
                                     title="${!app.isActive ? 'This app is inactive' : 'View credentials'}">🔑</button>
                         </div>
