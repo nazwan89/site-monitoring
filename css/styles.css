@@ -1195,6 +1195,93 @@
             gap: 8px;
         }
 
+        /* Pagination */
+        .pagination-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .rows-per-page {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #8899bb;
+        }
+
+        .rows-per-page select {
+            padding: 6px 10px;
+            background: rgba(30, 40, 60, 0.6);
+            border: 1px solid rgba(100, 150, 255, 0.3);
+            border-radius: 6px;
+            color: #e0e6ff;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .rows-per-page select:focus {
+            outline: none;
+            border-color: #64c8ff;
+            box-shadow: 0 0 0 3px rgba(100, 200, 255, 0.1);
+        }
+
+        .rows-per-page select option {
+            background: #1a2a4a;
+            color: #e0e6ff;
+        }
+
+        .pagination {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .pagination-info {
+            font-size: 13px;
+            color: #8899bb;
+        }
+
+        .pagination-controls {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .page-btn {
+            min-width: 36px;
+            padding: 6px 10px;
+            background: rgba(50, 80, 120, 0.3);
+            border: 1px solid rgba(100, 150, 255, 0.2);
+            border-radius: 6px;
+            color: #8899bb;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            background: rgba(50, 80, 120, 0.5);
+            color: #e0e6ff;
+            border-color: rgba(100, 150, 255, 0.4);
+        }
+
+        .page-btn.active {
+            background: linear-gradient(135deg, rgba(74, 125, 217, 0.5) 0%, rgba(106, 90, 204, 0.5) 100%);
+            color: #e0e6ff;
+            border-color: rgba(100, 150, 255, 0.5);
+        }
+
+        .page-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
         /* Alerts */
         .alert {
             padding: 15px 20px;

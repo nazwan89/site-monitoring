@@ -40,7 +40,7 @@
                         class="search-input"
                         id="tableSearchInput"
                         placeholder="🔍 Search by name, category, or description..."
-                        onkeyup="renderTable()"
+                        onkeyup="handleSearchInput()"
                     >
                 </div>
 
@@ -68,6 +68,19 @@
                             </tr>
                         </tbody>
                     </table>
+                </div>
+
+                <div class="pagination-bar">
+                    <div class="rows-per-page">
+                        <label for="rowsPerPageSelect">Rows per page:</label>
+                        <select id="rowsPerPageSelect" onchange="handleRowsPerPageChange()">
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                    </div>
+                    <div class="pagination" id="pagination"></div>
                 </div>
             </div>
         </div>
@@ -217,6 +230,8 @@
         let sessionId = null;
         let sortColumn = null;
         let sortDirection = 'asc';
+        let currentPage = 1;
+        let pageSize = 5;
 
         // ==================== AUTHENTICATION ====================
         async function handleLogout() {
@@ -249,6 +264,11 @@
         }
 
         // ==================== FILTER & SORT ====================
+        function handleSearchInput() {
+            currentPage = 1;
+            renderTable();
+        }
+
         function setSort(column) {
             if (sortColumn === column) {
                 sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
@@ -256,6 +276,7 @@
                 sortColumn = column;
                 sortDirection = 'asc';
             }
+            currentPage = 1;
             renderTable();
         }
 
@@ -307,6 +328,7 @@
                         </td>
                     </tr>
                 `;
+                document.getElementById('pagination').innerHTML = '';
                 return;
             }
 
@@ -324,10 +346,17 @@
                         </td>
                     </tr>
                 `;
+                document.getElementById('pagination').innerHTML = '';
                 return;
             }
 
-            tbody.innerHTML = filtered.map(app => `
+            const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+            currentPage = Math.min(Math.max(currentPage, 1), totalPages);
+
+            const start = (currentPage - 1) * pageSize;
+            const pageItems = filtered.slice(start, start + pageSize);
+
+            tbody.innerHTML = pageItems.map(app => `
                 <tr>
                     <td class="icon-cell">${app.icon}</td>
                     <td><strong>${app.name}</strong></td>
@@ -343,6 +372,51 @@
                     </td>
                 </tr>
             `).join('');
+
+            renderPagination(filtered.length, totalPages);
+        }
+
+        // ==================== PAGINATION ====================
+        const MAX_PAGE_BUTTONS = 3;
+
+        function renderPagination(filteredCount, totalPages) {
+            const el = document.getElementById('pagination');
+            const start = (currentPage - 1) * pageSize + 1;
+            const end = Math.min(currentPage * pageSize, filteredCount);
+
+            let html = `<div class="pagination-info">Showing ${start}-${end} of ${filteredCount}</div>`;
+
+            if (totalPages > 1) {
+                let startPage = Math.max(1, currentPage - Math.floor(MAX_PAGE_BUTTONS / 2));
+                let endPage = Math.min(totalPages, startPage + MAX_PAGE_BUTTONS - 1);
+                startPage = Math.max(1, endPage - MAX_PAGE_BUTTONS + 1);
+
+                const atStart = currentPage === 1;
+                const atEnd = currentPage === totalPages;
+
+                html += '<div class="pagination-controls">';
+                html += `<button class="page-btn" onclick="goToPage(1)" ${atStart ? 'disabled' : ''}>« First</button>`;
+                html += `<button class="page-btn" onclick="goToPage(${currentPage - 1})" ${atStart ? 'disabled' : ''}>‹ Prev</button>`;
+                for (let i = startPage; i <= endPage; i++) {
+                    html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+                }
+                html += `<button class="page-btn" onclick="goToPage(${currentPage + 1})" ${atEnd ? 'disabled' : ''}>Next ›</button>`;
+                html += `<button class="page-btn" onclick="goToPage(${totalPages})" ${atEnd ? 'disabled' : ''}>Last »</button>`;
+                html += '</div>';
+            }
+
+            el.innerHTML = html;
+        }
+
+        function goToPage(page) {
+            currentPage = page;
+            renderTable();
+        }
+
+        function handleRowsPerPageChange() {
+            pageSize = parseInt(document.getElementById('rowsPerPageSelect').value);
+            currentPage = 1;
+            renderTable();
         }
 
         // ==================== ADD APPLICATION ====================
