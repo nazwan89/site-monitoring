@@ -4,6 +4,12 @@ const path = require('path');
 const url = require('url');
 const crypto = require('crypto');
 
+try {
+    process.loadEnvFile(path.join(__dirname, '.env'));
+} catch (error) {
+    console.log('No .env file found — using environment variables / defaults');
+}
+
 const PORT = process.env.PORT || 3000;
 const DATA_FILE = path.join(__dirname, 'data.json');
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
