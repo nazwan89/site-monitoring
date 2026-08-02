@@ -111,16 +111,12 @@
 
                     <div class="form-group-full">
                         <label>Category *</label>
-                        <select id="category" required>
-                            <option value="">Select Category</option>
-                            <option value="Core Systems">Core Systems</option>
-                            <option value="CRM">CRM</option>
-                            <option value="Communication">Communication</option>
-                            <option value="Project Management">Project Management</option>
-                            <option value="Development">Development</option>
-                            <option value="Analytics & Data">Analytics & Data</option>
-                            <option value="Other">Other</option>
-                        </select>
+                        <select id="category" required onchange="toggleNewCategoryInput('category', 'newCategoryGroup')"></select>
+                    </div>
+
+                    <div class="form-group-full" id="newCategoryGroup" style="display: none;">
+                        <label>New Category Name *</label>
+                        <input type="text" id="newCategory" placeholder="e.g., Security Tools">
                     </div>
 
                     <div class="form-group-full">
@@ -182,15 +178,12 @@
 
                     <div class="form-group-full">
                         <label>Category *</label>
-                        <select id="editCategory" required>
-                            <option value="Core Systems">Core Systems</option>
-                            <option value="CRM">CRM</option>
-                            <option value="Communication">Communication</option>
-                            <option value="Project Management">Project Management</option>
-                            <option value="Development">Development</option>
-                            <option value="Analytics & Data">Analytics & Data</option>
-                            <option value="Other">Other</option>
-                        </select>
+                        <select id="editCategory" required onchange="toggleNewCategoryInput('editCategory', 'editNewCategoryGroup')"></select>
+                    </div>
+
+                    <div class="form-group-full" id="editNewCategoryGroup" style="display: none;">
+                        <label>New Category Name *</label>
+                        <input type="text" id="editNewCategory" placeholder="e.g., Security Tools">
                     </div>
 
                     <div class="form-group-full">
@@ -237,6 +230,7 @@
         let sortDirection = 'asc';
         let currentPage = 1;
         let pageSize = 5;
+        const BASE_CATEGORIES = ['Core Systems', 'CRM', 'Communication', 'Finance', 'Analytics & Data'];
 
         // ==================== AUTHENTICATION ====================
         async function handleLogout() {
@@ -434,6 +428,41 @@
             renderTable();
         }
 
+        // ==================== CATEGORIES ====================
+        function getAllCategories() {
+            const fromData = applications.map(a => a.category).filter(c => c && c !== 'Other');
+            return [...new Set([...BASE_CATEGORIES, ...fromData])].sort();
+        }
+
+        function populateCategorySelect(selectId, selectedValue) {
+            const select = document.getElementById(selectId);
+            const categories = getAllCategories();
+            let html = selectedValue === undefined ? '<option value="">Select Category</option>' : '';
+            html += categories.map(c => `<option value="${c}">${c}</option>`).join('');
+            html += '<option value="Other">Other (add new category)</option>';
+            select.innerHTML = html;
+            if (selectedValue !== undefined) {
+                select.value = selectedValue;
+            }
+        }
+
+        function toggleNewCategoryInput(selectId, groupId) {
+            const isOther = document.getElementById(selectId).value === 'Other';
+            const group = document.getElementById(groupId);
+            const input = group.querySelector('input');
+            group.style.display = isOther ? 'block' : 'none';
+            input.required = isOther;
+            if (!isOther) input.value = '';
+        }
+
+        function resolveCategory(selectId, inputId) {
+            const select = document.getElementById(selectId);
+            if (select.value === 'Other') {
+                return document.getElementById(inputId).value.trim();
+            }
+            return select.value;
+        }
+
         // ==================== ADD APPLICATION ====================
         async function addApplication(event) {
             event.preventDefault();
@@ -442,7 +471,7 @@
                 id: Math.max(...applications.map(a => a.id), 0) + 1,
                 name: document.getElementById('name').value,
                 icon: document.getElementById('icon').value,
-                category: document.getElementById('category').value,
+                category: resolveCategory('category', 'newCategory'),
                 description: document.getElementById('description').value,
                 url: document.getElementById('url').value,
                 username: document.getElementById('username').value,
@@ -471,11 +500,17 @@
 
         // ==================== ADD MODAL ====================
         function openAddModal() {
+            populateCategorySelect('category');
+            document.getElementById('newCategoryGroup').style.display = 'none';
+            document.getElementById('newCategory').required = false;
+            document.getElementById('newCategory').value = '';
             document.getElementById('addModal').classList.add('show');
         }
 
         function closeAddModal() {
             document.getElementById('addModal').classList.remove('show');
+            document.getElementById('newCategoryGroup').style.display = 'none';
+            document.getElementById('newCategory').required = false;
         }
 
         // ==================== EDIT APPLICATION ====================
@@ -486,7 +521,10 @@
             document.getElementById('editId').value = app.id;
             document.getElementById('editName').value = app.name;
             document.getElementById('editIcon').value = app.icon;
-            document.getElementById('editCategory').value = app.category;
+            populateCategorySelect('editCategory', app.category);
+            document.getElementById('editNewCategoryGroup').style.display = 'none';
+            document.getElementById('editNewCategory').required = false;
+            document.getElementById('editNewCategory').value = '';
             document.getElementById('editIsActive').value = app.isActive;
             document.getElementById('editUrl').value = app.url;
             document.getElementById('editUsername').value = app.username;
@@ -498,6 +536,8 @@
 
         function closeEditModal() {
             document.getElementById('editModal').classList.remove('show');
+            document.getElementById('editNewCategoryGroup').style.display = 'none';
+            document.getElementById('editNewCategory').required = false;
         }
 
         async function updateApplication(event) {
@@ -508,7 +548,7 @@
                 id: id,
                 name: document.getElementById('editName').value,
                 icon: document.getElementById('editIcon').value,
-                category: document.getElementById('editCategory').value,
+                category: resolveCategory('editCategory', 'editNewCategory'),
                 description: document.getElementById('editDescription').value,
                 url: document.getElementById('editUrl').value,
                 username: document.getElementById('editUsername').value,
