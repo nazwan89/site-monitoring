@@ -56,8 +56,8 @@
                                 <th>Icon</th>
                                 <th class="sortable" onclick="setSort('name')">Name<span class="sort-icon" id="sort-name"></span></th>
                                 <th class="sortable" onclick="setSort('category')">Category<span class="sort-icon" id="sort-category"></span></th>
-                                <th>URL</th>
                                 <th class="sortable" onclick="setSort('description')">Description<span class="sort-icon" id="sort-description"></span></th>
+                                <th>URL</th>
                                 <th class="sortable" onclick="setSort('isActive')">Status<span class="sort-icon" id="sort-isActive"></span></th>
                                 <th>Actions</th>
                             </tr>
@@ -376,8 +376,8 @@
                     <td class="icon-cell">${app.icon}</td>
                     <td><strong>${app.name}</strong></td>
                     <td>${app.category}</td>
-                    <td><a href="${app.url}" target="_blank" style="color: #64c8ff; text-decoration: none;">Open →</a></td>
                     <td>${app.description}</td>
+                    <td><a href="${app.url}" target="_blank" style="color: #64c8ff; text-decoration: none;">Open →</a></td>
                     <td><span class="status-badge ${app.isActive ? 'status-active' : 'status-inactive'}">${app.isActive ? '✓ Active' : '✗ Inactive'}</span></td>
                     <td>
                         <div class="action-buttons">
