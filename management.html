@@ -52,112 +52,109 @@
 
             <!-- Main Content -->
             <div class="main-content">
-                <!-- Tabs -->
-                <div class="tabs">
-                    <button class="tab-btn active" onclick="switchTab('applications')">📋 Applications</button>
-                    <button class="tab-btn" onclick="switchTab('add')">➕ Add New</button>
-                </div>
-
-                <!-- Tab: Applications -->
-                <div id="applications-tab" class="tab-content active">
+                <div class="section-header">
                     <div class="section-title">📋 Manage Applications</div>
-                    
-                    <div class="alert alert-success" id="successAlert"></div>
-                    <div class="alert alert-error" id="errorAlert"></div>
-
-                    <div class="table-wrapper">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Icon</th>
-                                    <th>Name</th>
-                                    <th>Category</th>
-                                    <th>URL</th>
-                                    <th>Username</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="applicationsTable">
-                                <tr>
-                                    <td colspan="7" style="text-align: center; padding: 40px;">
-                                        <div class="empty-state">
-                                            <div class="empty-state-icon">⏳</div>
-                                            <h2>Loading applications...</h2>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                    <button class="btn btn-primary" onclick="openAddModal()">➕ Add New</button>
                 </div>
 
-                <!-- Tab: Add New -->
-                <div id="add-tab" class="tab-content">
-                    <div class="section-title">➕ Add New Application</div>
+                <div class="alert alert-success" id="successAlert"></div>
+                <div class="alert alert-error" id="errorAlert"></div>
 
-                    <form onsubmit="addApplication(event)">
-                        <div class="form-grid">
-                            <div class="form-group-full">
-                                <label>Application Name *</label>
-                                <input type="text" id="name" placeholder="e.g., Cognisense" required>
-                            </div>
-
-                            <div class="form-group-full">
-                                <label>Icon (Emoji) *</label>
-                                <input type="text" id="icon" placeholder="e.g., 🧠" maxlength="2" required>
-                            </div>
-
-                            <div class="form-group-full">
-                                <label>Category *</label>
-                                <select id="category" required>
-                                    <option value="">Select Category</option>
-                                    <option value="Core Systems">Core Systems</option>
-                                    <option value="CRM">CRM</option>
-                                    <option value="Communication">Communication</option>
-                                    <option value="Project Management">Project Management</option>
-                                    <option value="Development">Development</option>
-                                    <option value="Analytics & Data">Analytics & Data</option>
-                                    <option value="Other">Other</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group-full">
-                                <label>Status *</label>
-                                <select id="isActive" required>
-                                    <option value="true">Active</option>
-                                    <option value="false">Inactive</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group-full">
-                                <label>Application URL *</label>
-                                <input type="url" id="url" placeholder="https://example.com" required>
-                            </div>
-
-                            <div class="form-group-full">
-                                <label>Username *</label>
-                                <input type="text" id="username" placeholder="user@company.com" required>
-                            </div>
-
-                            <div class="form-group-full">
-                                <label>Password *</label>
-                                <input type="password" id="password" placeholder="••••••••" required>
-                            </div>
-
-                            <div class="form-group-full">
-                                <label>Description *</label>
-                                <textarea id="description" placeholder="Brief description of the application" required></textarea>
-                            </div>
-
-                            <div class="form-actions">
-                                <button type="submit" class="btn btn-primary">✅ Add Application</button>
-                                <button type="reset" class="btn btn-neutral">🔄 Clear Form</button>
-                            </div>
-                        </div>
-                    </form>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Icon</th>
+                                <th>Name</th>
+                                <th>Category</th>
+                                <th>URL</th>
+                                <th>Username</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="applicationsTable">
+                            <tr>
+                                <td colspan="7" style="text-align: center; padding: 40px;">
+                                    <div class="empty-state">
+                                        <div class="empty-state-icon">⏳</div>
+                                        <h2>Loading applications...</h2>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Add Modal -->
+    <div class="modal" id="addModal" onclick="if(event.target.id === 'addModal') closeAddModal()">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeAddModal()">✕</button>
+            <div class="modal-title">Add New Application</div>
+
+            <form onsubmit="addApplication(event)">
+                <div class="form-grid">
+                    <div class="form-group-full">
+                        <label>Application Name *</label>
+                        <input type="text" id="name" placeholder="e.g., Cognisense" required>
+                    </div>
+
+                    <div class="form-group-full">
+                        <label>Icon (Emoji) *</label>
+                        <input type="text" id="icon" placeholder="e.g., 🧠" maxlength="2" required>
+                    </div>
+
+                    <div class="form-group-full">
+                        <label>Category *</label>
+                        <select id="category" required>
+                            <option value="">Select Category</option>
+                            <option value="Core Systems">Core Systems</option>
+                            <option value="CRM">CRM</option>
+                            <option value="Communication">Communication</option>
+                            <option value="Project Management">Project Management</option>
+                            <option value="Development">Development</option>
+                            <option value="Analytics & Data">Analytics & Data</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group-full">
+                        <label>Status *</label>
+                        <select id="isActive" required>
+                            <option value="true">Active</option>
+                            <option value="false">Inactive</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group-full">
+                        <label>Application URL *</label>
+                        <input type="url" id="url" placeholder="https://example.com" required>
+                    </div>
+
+                    <div class="form-group-full">
+                        <label>Username *</label>
+                        <input type="text" id="username" placeholder="user@company.com" required>
+                    </div>
+
+                    <div class="form-group-full">
+                        <label>Password *</label>
+                        <input type="password" id="password" placeholder="••••••••" required>
+                    </div>
+
+                    <div class="form-group-full">
+                        <label>Description *</label>
+                        <textarea id="description" placeholder="Brief description of the application" required></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">✅ Add Application</button>
+                        <button type="button" class="btn btn-neutral" onclick="closeAddModal()">❌ Cancel</button>
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -337,7 +334,7 @@
                             <div class="empty-state">
                                 <div class="empty-state-icon">📭</div>
                                 <h2>No applications found</h2>
-                                <p style="color: #668899;">Use the "Add New" tab to create your first application</p>
+                                <p style="color: #668899;">Click "Add New" to create your first application</p>
                             </div>
                         </td>
                     </tr>
@@ -391,11 +388,20 @@
                 applications.push(newApp);
                 renderTable();
                 event.target.reset();
+                closeAddModal();
                 showAlert('success', '✅ Application added successfully!');
-                switchTab('applications');
             } catch (error) {
                 showAlert('error', '❌ Error: ' + error.message);
             }
+        }
+
+        // ==================== ADD MODAL ====================
+        function openAddModal() {
+            document.getElementById('addModal').classList.add('show');
+        }
+
+        function closeAddModal() {
+            document.getElementById('addModal').classList.remove('show');
         }
 
         // ==================== EDIT APPLICATION ====================
@@ -476,15 +482,6 @@
             }
         }
 
-        // ==================== TAB SWITCHING ====================
-        function switchTab(tab) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-
-            document.getElementById(tab + '-tab').classList.add('active');
-            event.target.classList.add('active');
-        }
-
         // ==================== ALERTS ====================
         function showAlert(type, message) {
             const alertEl = document.getElementById(type + 'Alert');
@@ -510,6 +507,7 @@
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
+                closeAddModal();
                 closeEditModal();
             }
         });
