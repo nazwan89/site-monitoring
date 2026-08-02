@@ -42,6 +42,11 @@
                         placeholder="🔍 Search by name, category, or description..."
                         onkeyup="handleSearchInput()"
                     >
+                    <select class="filter-select" id="statusFilter" onchange="handleStatusFilterChange()">
+                        <option value="all">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
                 </div>
 
                 <div class="table-wrapper">
@@ -269,6 +274,11 @@
             renderTable();
         }
 
+        function handleStatusFilterChange() {
+            currentPage = 1;
+            renderTable();
+        }
+
         function setSort(column) {
             if (sortColumn === column) {
                 sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
@@ -290,11 +300,16 @@
 
         function getFilteredSortedApplications() {
             const searchText = document.getElementById('tableSearchInput').value.toLowerCase();
-            const filtered = applications.filter(app =>
-                app.name.toLowerCase().includes(searchText) ||
-                app.category.toLowerCase().includes(searchText) ||
-                app.description.toLowerCase().includes(searchText)
-            );
+            const statusValue = document.getElementById('statusFilter').value;
+            const filtered = applications.filter(app => {
+                const matchesSearch = app.name.toLowerCase().includes(searchText) ||
+                    app.category.toLowerCase().includes(searchText) ||
+                    app.description.toLowerCase().includes(searchText);
+                const matchesStatus = statusValue === 'all' ||
+                    (statusValue === 'active' && app.isActive) ||
+                    (statusValue === 'inactive' && !app.isActive);
+                return matchesSearch && matchesStatus;
+            });
 
             if (sortColumn) {
                 filtered.sort((a, b) => {

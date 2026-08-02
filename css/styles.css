@@ -487,6 +487,29 @@
             background: rgba(30, 40, 60, 0.8);
         }
 
+        .filter-select {
+            padding: 12px 16px;
+            border: 1px solid rgba(100, 150, 255, 0.3);
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+            background: rgba(30, 40, 60, 0.6);
+            color: #e0e6ff;
+            cursor: pointer;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: #64c8ff;
+            box-shadow: 0 0 0 3px rgba(100, 200, 255, 0.1);
+            background: rgba(30, 40, 60, 0.8);
+        }
+
+        .filter-select option {
+            background: #1a2a4a;
+            color: #e0e6ff;
+        }
+
         .filter-tabs {
             display: flex;
             gap: 10px;

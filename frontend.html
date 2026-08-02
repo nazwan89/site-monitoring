@@ -31,13 +31,18 @@
                 <!-- Controls -->
                 <div class="controls">
                     <div class="search-box">
-                        <input 
-                            type="text" 
-                            class="search-input" 
-                            id="searchInput" 
-                            placeholder="🔍 Search applications..." 
+                        <input
+                            type="text"
+                            class="search-input"
+                            id="searchInput"
+                            placeholder="🔍 Search applications..."
                             onkeyup="filterApps()"
                         >
+                        <select class="filter-select" id="statusFilter" onchange="filterApps()">
+                            <option value="all">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
                     </div>
 
                     <div class="filter-tabs" id="filterTabs"></div>
@@ -208,11 +213,15 @@
         // ==================== FILTER APPLICATIONS ====================
         function filterApps() {
             const searchText = document.getElementById('searchInput').value.toLowerCase();
+            const statusValue = document.getElementById('statusFilter').value;
             const filtered = applications.filter(app => {
                 const matchesCategory = selectedCategory === 'All' || app.category === selectedCategory;
                 const matchesSearch = app.name.toLowerCase().includes(searchText) ||
                                     app.description.toLowerCase().includes(searchText);
-                return matchesCategory && matchesSearch;
+                const matchesStatus = statusValue === 'all' ||
+                    (statusValue === 'active' && app.isActive) ||
+                    (statusValue === 'inactive' && !app.isActive);
+                return matchesCategory && matchesSearch && matchesStatus;
             });
 
             visibleCount = BATCH_SIZE;
