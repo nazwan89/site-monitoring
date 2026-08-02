@@ -287,7 +287,7 @@ const server = http.createServer((req, res) => {
                 const applications = readData();
 
                 // Validate required fields
-                if (!newApp.name || !newApp.icon || !newApp.category || !newApp.url || !newApp.username || !newApp.password) {
+                if (!newApp.name || !newApp.icon || !Array.isArray(newApp.categories) || newApp.categories.length === 0 || !newApp.url || !newApp.username || !newApp.password) {
                     res.writeHead(400, { 'Content-Type': 'application/json' });
                     res.end(JSON.stringify({ error: 'Missing required fields' }));
                     return;

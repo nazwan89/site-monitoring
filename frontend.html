@@ -170,11 +170,18 @@
         }
 
         // ==================== LOAD APPLICATIONS ====================
+        function normalizeCategories(app) {
+            if (Array.isArray(app.categories) && app.categories.length) return app.categories;
+            if (app.category) return [app.category];
+            return [];
+        }
+
         async function loadApplications() {
             try {
                 const response = await fetch('/data.json');
                 if (!response.ok) throw new Error('Failed to load data');
-                applications = await response.json();
+                const raw = await response.json();
+                applications = raw.map(app => ({ ...app, categories: normalizeCategories(app) }));
                 lazyLoadObserver.observe(document.getElementById('scrollSentinel'));
                 renderFilterTabs();
                 renderStats();
@@ -187,11 +194,11 @@
 
         // ==================== FILTER TABS ====================
         function renderFilterTabs() {
-            const categories = ['All', ...new Set(applications.map(a => a.category))];
+            const categories = ['All', ...new Set(applications.flatMap(a => a.categories))];
             const tabsContainer = document.getElementById('filterTabs');
-            
+
             tabsContainer.innerHTML = categories.map(category => {
-                const count = category === 'All' ? applications.length : applications.filter(a => a.category === category).length;
+                const count = category === 'All' ? applications.length : applications.filter(a => a.categories.includes(category)).length;
                 return `
                     <button class="filter-tab ${category === 'All' ? 'active' : ''}" onclick="selectCategory('${category}')">
                         ${category}
@@ -215,7 +222,7 @@
             const searchText = document.getElementById('searchInput').value.toLowerCase();
             const statusValue = document.getElementById('statusFilter').value;
             const filtered = applications.filter(app => {
-                const matchesCategory = selectedCategory === 'All' || app.category === selectedCategory;
+                const matchesCategory = selectedCategory === 'All' || app.categories.includes(selectedCategory);
                 const matchesSearch = app.name.toLowerCase().includes(searchText) ||
                                     app.description.toLowerCase().includes(searchText);
                 const matchesStatus = statusValue === 'all' ||
@@ -260,7 +267,7 @@
                 <div class="app-card ${!app.isActive ? 'inactive-card' : ''}">
                     <div class="card-icon">${app.icon}</div>
                     <div class="card-name">${app.name}</div>
-                    <div class="card-category">${app.category}</div>
+                    <div class="card-categories">${app.categories.map(c => `<span class="card-category">${c}</span>`).join('')}</div>
                     <div class="card-description">${app.description}</div>
                     <div class="card-footer">
                         ${app.isActive ? '<div class="active-badge">✓ Active</div>' : '<div class="inactive-badge">✕ Inactive</div>'}

@@ -655,6 +655,13 @@
             margin-bottom: 8px;
         }
 
+        .card-categories {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
         .card-category {
             display: inline-block;
             background: rgba(100, 150, 200, 0.2);
@@ -663,7 +670,6 @@
             border-radius: 4px;
             font-size: 12px;
             font-weight: 600;
-            margin-bottom: 12px;
             border: 1px solid rgba(100, 150, 255, 0.2);
         }
 
@@ -1152,6 +1158,143 @@
             display: flex;
             gap: 10px;
             grid-column: 1 / -1;
+        }
+
+        /* Category multi-select dropdown */
+        .multiselect {
+            position: relative;
+        }
+
+        .multiselect-trigger {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 10px 14px;
+            border: 1px solid rgba(100, 150, 255, 0.3);
+            border-radius: 8px;
+            background: rgba(30, 40, 60, 0.6);
+            color: #e0e6ff;
+            font-size: 14px;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+        }
+
+        .multiselect-trigger:hover {
+            border-color: rgba(100, 150, 255, 0.5);
+        }
+
+        .multiselect.open .multiselect-trigger {
+            border-color: #64c8ff;
+            box-shadow: 0 0 0 3px rgba(100, 200, 255, 0.1);
+        }
+
+        .multiselect-trigger-text {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: #e0e6ff;
+        }
+
+        .multiselect-trigger-text.placeholder {
+            color: #668899;
+        }
+
+        .multiselect-arrow {
+            font-size: 10px;
+            color: #8899bb;
+            transition: transform 0.3s;
+            flex-shrink: 0;
+        }
+
+        .multiselect.open .multiselect-arrow {
+            transform: rotate(180deg);
+        }
+
+        .multiselect-panel {
+            display: none;
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            right: 0;
+            background: #16233d;
+            border: 1px solid rgba(100, 150, 255, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+            z-index: 50;
+        }
+
+        .multiselect.open .multiselect-panel {
+            display: block;
+        }
+
+        .category-checkboxes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            max-height: 160px;
+            overflow-y: auto;
+        }
+
+        .category-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            background: rgba(50, 80, 120, 0.3);
+            border: 1px solid rgba(100, 150, 255, 0.2);
+            border-radius: 20px;
+            font-size: 13px;
+            color: #b0c4ff;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .category-checkbox:hover {
+            background: rgba(50, 80, 120, 0.5);
+        }
+
+        .category-checkbox input {
+            cursor: pointer;
+        }
+
+        .new-category-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .new-category-row input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid rgba(100, 150, 255, 0.3);
+            border-radius: 8px;
+            font-size: 14px;
+            background: rgba(30, 40, 60, 0.6);
+            color: #e0e6ff;
+        }
+
+        .new-category-row input:focus {
+            outline: none;
+            border-color: #64c8ff;
+            box-shadow: 0 0 0 3px rgba(100, 200, 255, 0.1);
+        }
+
+        .category-tag {
+            display: inline-block;
+            background: rgba(100, 150, 200, 0.2);
+            color: #8ab4ff;
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            margin: 2px;
+            border: 1px solid rgba(100, 150, 255, 0.2);
         }
 
         /* Table */

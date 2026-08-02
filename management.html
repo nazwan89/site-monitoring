@@ -110,13 +110,20 @@
                     </div>
 
                     <div class="form-group-full">
-                        <label>Category *</label>
-                        <select id="category" required onchange="toggleNewCategoryInput('category', 'newCategoryGroup')"></select>
-                    </div>
-
-                    <div class="form-group-full" id="newCategoryGroup" style="display: none;">
-                        <label>New Category Name *</label>
-                        <input type="text" id="newCategory" placeholder="e.g., Security Tools">
+                        <label>Categories * (select one or more)</label>
+                        <div class="multiselect" id="categoryMultiselect">
+                            <button type="button" class="multiselect-trigger" onclick="toggleMultiselect('categoryMultiselect')">
+                                <span class="multiselect-trigger-text placeholder" id="categoryMultiselectText">Select categories...</span>
+                                <span class="multiselect-arrow">▼</span>
+                            </button>
+                            <div class="multiselect-panel">
+                                <div class="category-checkboxes" id="categoryCheckboxes"></div>
+                                <div class="new-category-row">
+                                    <input type="text" id="newCategory" placeholder="Add a new category...">
+                                    <button type="button" class="btn btn-neutral" onclick="addCategoryTag('categoryCheckboxes', 'newCategory', 'categoryMultiselectText')">➕ Add</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="form-group-full">
@@ -177,13 +184,20 @@
                     </div>
 
                     <div class="form-group-full">
-                        <label>Category *</label>
-                        <select id="editCategory" required onchange="toggleNewCategoryInput('editCategory', 'editNewCategoryGroup')"></select>
-                    </div>
-
-                    <div class="form-group-full" id="editNewCategoryGroup" style="display: none;">
-                        <label>New Category Name *</label>
-                        <input type="text" id="editNewCategory" placeholder="e.g., Security Tools">
+                        <label>Categories * (select one or more)</label>
+                        <div class="multiselect" id="editCategoryMultiselect">
+                            <button type="button" class="multiselect-trigger" onclick="toggleMultiselect('editCategoryMultiselect')">
+                                <span class="multiselect-trigger-text placeholder" id="editCategoryMultiselectText">Select categories...</span>
+                                <span class="multiselect-arrow">▼</span>
+                            </button>
+                            <div class="multiselect-panel">
+                                <div class="category-checkboxes" id="editCategoryCheckboxes"></div>
+                                <div class="new-category-row">
+                                    <input type="text" id="editNewCategory" placeholder="Add a new category...">
+                                    <button type="button" class="btn btn-neutral" onclick="addCategoryTag('editCategoryCheckboxes', 'editNewCategory', 'editCategoryMultiselectText')">➕ Add</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="form-group-full">
@@ -251,11 +265,18 @@
         }
 
         // ==================== LOAD APPLICATIONS ====================
+        function normalizeCategories(app) {
+            if (Array.isArray(app.categories) && app.categories.length) return app.categories;
+            if (app.category) return [app.category];
+            return [];
+        }
+
         async function loadApplications() {
             try {
                 const response = await fetch('/data.json');
                 if (!response.ok) throw new Error('Failed to load data');
-                applications = await response.json();
+                const raw = await response.json();
+                applications = raw.map(app => ({ ...app, categories: normalizeCategories(app) }));
                 renderTable();
             } catch (error) {
                 showAlert('error', '❌ Error loading applications: ' + error.message);
@@ -297,7 +318,7 @@
             const statusValue = document.getElementById('statusFilter').value;
             const filtered = applications.filter(app => {
                 const matchesSearch = app.name.toLowerCase().includes(searchText) ||
-                    app.category.toLowerCase().includes(searchText) ||
+                    app.categories.some(c => c.toLowerCase().includes(searchText)) ||
                     app.description.toLowerCase().includes(searchText);
                 const matchesStatus = statusValue === 'all' ||
                     (statusValue === 'active' && app.isActive) ||
@@ -307,8 +328,8 @@
 
             if (sortColumn) {
                 filtered.sort((a, b) => {
-                    let valA = a[sortColumn];
-                    let valB = b[sortColumn];
+                    let valA = sortColumn === 'category' ? a.categories.join(', ') : a[sortColumn];
+                    let valB = sortColumn === 'category' ? b.categories.join(', ') : b[sortColumn];
                     if (typeof valA === 'string') valA = valA.toLowerCase();
                     if (typeof valB === 'string') valB = valB.toLowerCase();
                     if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
@@ -369,7 +390,7 @@
                 <tr>
                     <td class="icon-cell">${app.icon}</td>
                     <td><strong>${app.name}</strong></td>
-                    <td>${app.category}</td>
+                    <td>${app.categories.map(c => `<span class="category-tag">${c}</span>`).join('')}</td>
                     <td>${app.description}</td>
                     <td><a href="${app.url}" target="_blank" style="color: #64c8ff; text-decoration: none;">Open →</a></td>
                     <td><span class="status-badge ${app.isActive ? 'status-active' : 'status-inactive'}">${app.isActive ? '✓ Active' : '✗ Inactive'}</span></td>
@@ -430,48 +451,88 @@
 
         // ==================== CATEGORIES ====================
         function getAllCategories() {
-            const fromData = applications.map(a => a.category).filter(c => c && c !== 'Other');
+            const fromData = applications.flatMap(a => a.categories || []);
             return [...new Set([...BASE_CATEGORIES, ...fromData])].sort();
         }
 
-        function populateCategorySelect(selectId, selectedValue) {
-            const select = document.getElementById(selectId);
+        function renderCategoryCheckboxes(containerId, textId, selected = []) {
+            const container = document.getElementById(containerId);
             const categories = getAllCategories();
-            let html = selectedValue === undefined ? '<option value="">Select Category</option>' : '';
-            html += categories.map(c => `<option value="${c}">${c}</option>`).join('');
-            html += '<option value="Other">Other (add new category)</option>';
-            select.innerHTML = html;
-            if (selectedValue !== undefined) {
-                select.value = selectedValue;
+            container.innerHTML = categories.map(cat => `
+                <label class="category-checkbox">
+                    <input type="checkbox" value="${cat}" ${selected.includes(cat) ? 'checked' : ''} onchange="updateMultiselectText('${containerId}', '${textId}')">
+                    ${cat}
+                </label>
+            `).join('');
+            updateMultiselectText(containerId, textId);
+        }
+
+        function getSelectedCategories(containerId) {
+            return Array.from(document.querySelectorAll(`#${containerId} input[type="checkbox"]:checked`)).map(cb => cb.value);
+        }
+
+        function addCategoryTag(containerId, inputId, textId) {
+            const input = document.getElementById(inputId);
+            const value = input.value.trim();
+            if (!value) return;
+
+            const container = document.getElementById(containerId);
+            const existing = Array.from(container.querySelectorAll('input[type="checkbox"]'))
+                .find(cb => cb.value.toLowerCase() === value.toLowerCase());
+
+            if (existing) {
+                existing.checked = true;
+            } else {
+                const label = document.createElement('label');
+                label.className = 'category-checkbox';
+                label.innerHTML = `<input type="checkbox" value="${value}" checked onchange="updateMultiselectText('${containerId}', '${textId}')"> ${value}`;
+                container.appendChild(label);
+            }
+            input.value = '';
+            updateMultiselectText(containerId, textId);
+        }
+
+        // ==================== MULTISELECT DROPDOWN ====================
+        function toggleMultiselect(id) {
+            const el = document.getElementById(id);
+            const isOpen = el.classList.contains('open');
+            document.querySelectorAll('.multiselect.open').forEach(m => m.classList.remove('open'));
+            if (!isOpen) el.classList.add('open');
+        }
+
+        function updateMultiselectText(containerId, textId) {
+            const textEl = document.getElementById(textId);
+            const selected = getSelectedCategories(containerId);
+            if (selected.length === 0) {
+                textEl.textContent = 'Select categories...';
+                textEl.classList.add('placeholder');
+            } else {
+                textEl.textContent = selected.join(', ');
+                textEl.classList.remove('placeholder');
             }
         }
 
-        function toggleNewCategoryInput(selectId, groupId) {
-            const isOther = document.getElementById(selectId).value === 'Other';
-            const group = document.getElementById(groupId);
-            const input = group.querySelector('input');
-            group.style.display = isOther ? 'block' : 'none';
-            input.required = isOther;
-            if (!isOther) input.value = '';
-        }
-
-        function resolveCategory(selectId, inputId) {
-            const select = document.getElementById(selectId);
-            if (select.value === 'Other') {
-                return document.getElementById(inputId).value.trim();
-            }
-            return select.value;
-        }
+        document.addEventListener('click', (e) => {
+            document.querySelectorAll('.multiselect.open').forEach(m => {
+                if (!m.contains(e.target)) m.classList.remove('open');
+            });
+        });
 
         // ==================== ADD APPLICATION ====================
         async function addApplication(event) {
             event.preventDefault();
 
+            const categories = getSelectedCategories('categoryCheckboxes');
+            if (categories.length === 0) {
+                showAlert('error', '❌ Please select at least one category');
+                return;
+            }
+
             const newApp = {
                 id: Math.max(...applications.map(a => a.id), 0) + 1,
                 name: document.getElementById('name').value,
                 icon: document.getElementById('icon').value,
-                category: resolveCategory('category', 'newCategory'),
+                categories: categories,
                 description: document.getElementById('description').value,
                 url: document.getElementById('url').value,
                 username: document.getElementById('username').value,
@@ -500,17 +561,15 @@
 
         // ==================== ADD MODAL ====================
         function openAddModal() {
-            populateCategorySelect('category');
-            document.getElementById('newCategoryGroup').style.display = 'none';
-            document.getElementById('newCategory').required = false;
+            renderCategoryCheckboxes('categoryCheckboxes', 'categoryMultiselectText');
             document.getElementById('newCategory').value = '';
+            document.getElementById('categoryMultiselect').classList.remove('open');
             document.getElementById('addModal').classList.add('show');
         }
 
         function closeAddModal() {
             document.getElementById('addModal').classList.remove('show');
-            document.getElementById('newCategoryGroup').style.display = 'none';
-            document.getElementById('newCategory').required = false;
+            document.getElementById('categoryMultiselect').classList.remove('open');
         }
 
         // ==================== EDIT APPLICATION ====================
@@ -521,10 +580,9 @@
             document.getElementById('editId').value = app.id;
             document.getElementById('editName').value = app.name;
             document.getElementById('editIcon').value = app.icon;
-            populateCategorySelect('editCategory', app.category);
-            document.getElementById('editNewCategoryGroup').style.display = 'none';
-            document.getElementById('editNewCategory').required = false;
+            renderCategoryCheckboxes('editCategoryCheckboxes', 'editCategoryMultiselectText', app.categories);
             document.getElementById('editNewCategory').value = '';
+            document.getElementById('editCategoryMultiselect').classList.remove('open');
             document.getElementById('editIsActive').value = app.isActive;
             document.getElementById('editUrl').value = app.url;
             document.getElementById('editUsername').value = app.username;
@@ -536,19 +594,24 @@
 
         function closeEditModal() {
             document.getElementById('editModal').classList.remove('show');
-            document.getElementById('editNewCategoryGroup').style.display = 'none';
-            document.getElementById('editNewCategory').required = false;
+            document.getElementById('editCategoryMultiselect').classList.remove('open');
         }
 
         async function updateApplication(event) {
             event.preventDefault();
+
+            const categories = getSelectedCategories('editCategoryCheckboxes');
+            if (categories.length === 0) {
+                showAlert('error', '❌ Please select at least one category');
+                return;
+            }
 
             const id = parseInt(document.getElementById('editId').value);
             const updatedApp = {
                 id: id,
                 name: document.getElementById('editName').value,
                 icon: document.getElementById('editIcon').value,
-                category: resolveCategory('editCategory', 'editNewCategory'),
+                categories: categories,
                 description: document.getElementById('editDescription').value,
                 url: document.getElementById('editUrl').value,
                 username: document.getElementById('editUsername').value,
