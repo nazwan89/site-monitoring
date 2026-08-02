@@ -96,6 +96,20 @@ const server = http.createServer((req, res) => {
         return;
     }
 
+    // GET /css/styles.css
+    if (pathname === '/css/styles.css') {
+        fs.readFile(path.join(__dirname, 'css', 'styles.css'), 'utf8', (err, data) => {
+            if (err) {
+                res.writeHead(404, { 'Content-Type': 'text/plain' });
+                res.end('404 - File not found');
+                return;
+            }
+            res.writeHead(200, { 'Content-Type': 'text/css' });
+            res.end(data);
+        });
+        return;
+    }
+
     // GET /data.json
     if (pathname === '/data.json') {
         const data = readData();
