@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Millennium Radius - Login</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="main-container">
+        <div class="login-container">
+            <div class="login-card">
+                <div class="login-header">
+                    <div class="login-icon">🏢</div>
+                    <h1>Millennium Radius</h1>
+                    <p>Sign in to continue</p>
+                </div>
+
+                <form onsubmit="handleLogin(event)" id="loginForm">
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="password" placeholder="Enter your password" required autofocus>
+                    </div>
+                    <button type="submit" class="login-btn" id="loginBtn">Sign In</button>
+                    <div class="login-error" id="loginError"></div>
+                </form>
+
+                <div class="login-info">
+                    <strong>ℹ️ Note:</strong><br>
+                    Your password determines your access level. Portal password grants the
+                    application portal; admin password grants the admin console (and portal access).
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function tryLogin(endpoint, password) {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password })
+            });
+
+            const contentType = response.headers.get('content-type');
+            if (!response.ok || !contentType || !contentType.includes('application/json')) {
+                return null;
+            }
+
+            return response.json();
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+            const password = document.getElementById('password').value;
+            const loginBtn = document.getElementById('loginBtn');
+            const loginError = document.getElementById('loginError');
+
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Signing in...';
+            loginError.classList.remove('show');
+
+            try {
+                const adminData = await tryLogin('/api/auth/admin/login', password);
+                if (adminData && adminData.success) {
+                    localStorage.setItem('sessionId', adminData.sessionId);
+                    window.location.href = 'management.html';
+                    return;
+                }
+
+                const portalData = await tryLogin('/api/auth/portal/login', password);
+                if (portalData && portalData.success) {
+                    localStorage.setItem('portalSessionId', portalData.sessionId);
+                    window.location.href = 'frontend.html';
+                    return;
+                }
+
+                loginError.textContent = '❌ Invalid password';
+                loginError.classList.add('show');
+                loginBtn.textContent = 'Sign In';
+                loginBtn.disabled = false;
+            } catch (error) {
+                loginError.textContent = '❌ Error: ' + error.message;
+                loginError.classList.add('show');
+                loginBtn.textContent = 'Sign In';
+                loginBtn.disabled = false;
+            }
+        }
+
+        // Already signed in? Skip straight to the right destination.
+        window.addEventListener('load', () => {
+            if (localStorage.getItem('sessionId')) {
+                window.location.href = 'management.html';
+            } else if (localStorage.getItem('portalSessionId')) {
+                window.location.href = 'frontend.html';
+            }
+        });
+    </script>
+</body>
+</html>

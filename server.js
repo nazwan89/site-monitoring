@@ -82,6 +82,20 @@ const server = http.createServer((req, res) => {
         return;
     }
 
+    // GET /login.html
+    if (pathname === '/login.html') {
+        fs.readFile(path.join(__dirname, 'login.html'), 'utf8', (err, data) => {
+            if (err) {
+                res.writeHead(404, { 'Content-Type': 'text/plain' });
+                res.end('404 - File not found');
+                return;
+            }
+            res.writeHead(200, { 'Content-Type': 'text/html' });
+            res.end(data);
+        });
+        return;
+    }
+
     // GET /management.html
     if (pathname === '/management.html') {
         fs.readFile(path.join(__dirname, 'management.html'), 'utf8', (err, data) => {

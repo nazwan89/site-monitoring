@@ -8,37 +8,6 @@
 </head>
 <body>
     <div class="main-container">
-        <!-- Login Screen -->
-        <div class="login-container" id="loginSection">
-            <div class="login-card">
-                <div class="login-header">
-                    <div class="login-icon">🏢</div>
-                    <h1>Portal Access</h1>
-                    <p>Millennium Radius Application Portal</p>
-                </div>
-
-                <div id="adminNotice" class="admin-badge" style="display: none;">
-                    <strong>👤 Admin Detected:</strong><br>
-                    You are logged in as admin. Portal access granted automatically!
-                </div>
-
-                <form onsubmit="handleLogin(event)" id="loginForm">
-                    <div class="form-group">
-                        <label>Portal Password</label>
-                        <input type="password" id="portalPassword" placeholder="Enter portal password" required autofocus>
-                    </div>
-                    <button type="submit" class="login-btn" id="loginBtn">Access Portal</button>
-                    <div class="login-error" id="loginError"></div>
-                </form>
-
-                <div class="login-info">
-                    <strong>ℹ️ Default Password:</strong><br>
-                    <code>portal123</code><br><br>
-                    <strong>Note:</strong> Password is validated on the server for security.
-                </div>
-            </div>
-        </div>
-
         <!-- Portal Screen -->
         <div class="portal-container" id="portalSection">
             <div class="portal-content">
@@ -136,14 +105,11 @@
             if (adminSessionId) {
                 isAdminUser = true;
                 sessionId = adminSessionId;
-                
-                document.getElementById('adminNotice').style.display = 'block';
-                document.getElementById('loginForm').style.display = 'none';
-                document.getElementById('loginSection').classList.add('hidden');
+
                 document.getElementById('portalSection').classList.add('visible');
                 document.getElementById('adminLink').style.display = 'inline-block';
                 document.getElementById('userTypeIndicator').textContent = '👤 Admin User (Full Access)';
-                
+
                 loadApplications();
                 return;
             }
@@ -152,73 +118,18 @@
             if (portalSessionId) {
                 isAdminUser = false;
                 sessionId = portalSessionId;
-                
-                document.getElementById('loginSection').classList.add('hidden');
+
                 document.getElementById('portalSection').classList.add('visible');
                 document.getElementById('userTypeIndicator').textContent = '👤 Portal User';
-                
+
                 loadApplications();
                 return;
             }
 
-            document.getElementById('loginSection').classList.remove('hidden');
+            window.location.href = 'login.html';
         });
 
         // ==================== AUTHENTICATION ====================
-        async function handleLogin(event) {
-            event.preventDefault();
-            const password = document.getElementById('portalPassword').value;
-            const loginBtn = document.getElementById('loginBtn');
-            const loginError = document.getElementById('loginError');
-
-            loginBtn.disabled = true;
-            loginBtn.textContent = 'Accessing...';
-
-            try {
-                const response = await fetch('/api/auth/portal/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ password })
-                });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`Server error: ${response.status}`);
-                }
-
-                const contentType = response.headers.get('content-type');
-                if (!contentType || !contentType.includes('application/json')) {
-                    throw new Error('Server returned non-JSON response');
-                }
-
-                const data = await response.json();
-
-                if (data.success) {
-                    isAdminUser = false;
-                    sessionId = data.sessionId;
-                    localStorage.setItem('portalSessionId', sessionId);
-                    
-                    document.getElementById('loginSection').classList.add('hidden');
-                    document.getElementById('portalSection').classList.add('visible');
-                    document.getElementById('userTypeIndicator').textContent = '👤 Portal User';
-                    loadApplications();
-                    loginBtn.textContent = 'Access Portal';
-                    loginBtn.disabled = false;
-                } else {
-                    loginError.textContent = '❌ ' + (data.error || 'Access denied');
-                    loginError.classList.add('show');
-                    loginBtn.textContent = 'Access Portal';
-                    loginBtn.disabled = false;
-                    setTimeout(() => loginError.classList.remove('show'), 3000);
-                }
-            } catch (error) {
-                loginError.textContent = '❌ Error: ' + error.message;
-                loginError.classList.add('show');
-                loginBtn.textContent = 'Access Portal';
-                loginBtn.disabled = false;
-            }
-        }
-
         async function handleLogout() {
             if (sessionId) {
                 try {
@@ -233,16 +144,9 @@
                 }
             }
 
-            sessionId = null;
-            isAdminUser = false;
             localStorage.removeItem('portalSessionId');
             localStorage.removeItem('sessionId');
-            
-            document.getElementById('loginSection').classList.remove('hidden');
-            document.getElementById('portalSection').classList.remove('visible');
-            document.getElementById('adminNotice').style.display = 'none';
-            document.getElementById('loginForm').style.display = 'block';
-            document.getElementById('portalPassword').value = '';
+            window.location.href = 'login.html';
         }
 
         // ==================== LOAD APPLICATIONS ====================

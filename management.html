@@ -8,32 +8,6 @@
 </head>
 <body>
     <div class="container">
-        <!-- Login Modal -->
-        <div class="login-modal" id="loginSection">
-            <div class="login-card">
-                <div class="login-header">
-                    <div class="login-icon">🔐</div>
-                    <h1>Admin Console</h1>
-                    <p>Millennium Radius Management</p>
-                </div>
-
-                <form onsubmit="handleLogin(event)">
-                    <div class="form-group">
-                        <label>Password</label>
-                        <input type="password" id="adminPassword" placeholder="Enter admin password" required autofocus>
-                    </div>
-                    <button type="submit" class="login-btn" id="loginBtn">Login</button>
-                    <div class="login-error" id="loginError"></div>
-                </form>
-
-                <div class="demo-credentials">
-                    <strong>ℹ️ Default Password:</strong><br>
-                    <code>admin123</code><br><br>
-                    <strong>Note:</strong> Password is validated on the server for security.
-                </div>
-            </div>
-        </div>
-
         <!-- Dashboard -->
         <div class="dashboard" id="dashboardSection">
             <!-- Header -->
@@ -245,64 +219,6 @@
         let sortDirection = 'asc';
 
         // ==================== AUTHENTICATION ====================
-        async function handleLogin(event) {
-            event.preventDefault();
-            const password = document.getElementById('adminPassword').value;
-            const loginBtn = document.getElementById('loginBtn');
-            const loginError = document.getElementById('loginError');
-
-            loginBtn.disabled = true;
-            loginBtn.textContent = 'Logging in...';
-
-            try {
-                const response = await fetch('/api/auth/admin/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ password })
-                });
-
-                // Check if response is OK first
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('Server error:', response.status, errorText);
-                    throw new Error(`Server error: ${response.status}`);
-                }
-
-                // Check content type before parsing
-                const contentType = response.headers.get('content-type');
-                if (!contentType || !contentType.includes('application/json')) {
-                    const text = await response.text();
-                    console.error('Invalid content type:', contentType, 'Response:', text);
-                    throw new Error('Server returned non-JSON response');
-                }
-
-                const data = await response.json();
-
-                if (data.success) {
-                    sessionId = data.sessionId;
-                    localStorage.setItem('sessionId', sessionId);
-                    
-                    document.getElementById('loginSection').style.display = 'none';
-                    document.getElementById('dashboardSection').classList.add('visible');
-                    loadApplications();
-                    loginBtn.textContent = 'Login';
-                    loginBtn.disabled = false;
-                } else {
-                    loginError.textContent = '❌ ' + (data.error || 'Login failed');
-                    loginError.classList.add('show');
-                    loginBtn.textContent = 'Login';
-                    loginBtn.disabled = false;
-                    setTimeout(() => loginError.classList.remove('show'), 3000);
-                }
-            } catch (error) {
-                console.error('Login error:', error);
-                loginError.textContent = '❌ Error: ' + error.message;
-                loginError.classList.add('show');
-                loginBtn.textContent = 'Login';
-                loginBtn.disabled = false;
-            }
-        }
-
         async function handleLogout() {
             if (sessionId) {
                 try {
@@ -316,11 +232,8 @@
                 }
             }
 
-            sessionId = null;
             localStorage.removeItem('sessionId');
-            document.getElementById('loginSection').style.display = 'flex';
-            document.getElementById('dashboardSection').classList.remove('visible');
-            document.getElementById('adminPassword').value = '';
+            window.location.href = 'login.html';
         }
 
         // ==================== LOAD APPLICATIONS ====================
@@ -570,9 +483,10 @@
             const savedSessionId = localStorage.getItem('sessionId');
             if (savedSessionId) {
                 sessionId = savedSessionId;
-                document.getElementById('loginSection').style.display = 'none';
                 document.getElementById('dashboardSection').classList.add('visible');
                 loadApplications();
+            } else {
+                window.location.href = 'login.html';
             }
         });
 
