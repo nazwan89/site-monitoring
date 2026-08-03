@@ -1,5 +1,4 @@
 const http = require('http');
-const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const url = require('url');
@@ -98,73 +97,6 @@ function writeData(data) {
     }
 }
 
-// ==================== URL MONITORING ====================
-// Background health-checking: each app's status is derived from whether its URL
-// responds with a non-error status (< 400) rather than a manually-set flag.
-const URL_CHECK_TIMEOUT_MS = parseInt(process.env.URL_CHECK_TIMEOUT_MS) || 5000;
-const POLL_INTERVAL_MS = parseInt(process.env.POLL_INTERVAL_MS) || 60 * 1000;
-const urlStatus = {}; // { [appId]: boolean }
-
-function checkUrl(targetUrl) {
-    return new Promise((resolve) => {
-        let settled = false;
-        const settle = (result) => {
-            if (settled) return;
-            settled = true;
-            resolve(result);
-        };
-
-        let parsedUrl;
-        try {
-            parsedUrl = new URL(targetUrl);
-        } catch (error) {
-            settle(false);
-            return;
-        }
-
-        if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
-            settle(false);
-            return;
-        }
-
-        const client = parsedUrl.protocol === 'https:' ? https : http;
-        const req = client.get(parsedUrl, {
-            timeout: URL_CHECK_TIMEOUT_MS,
-            rejectUnauthorized: false // internal tools often use self-signed/internal CAs
-        }, (res) => {
-            res.resume(); // discard body, we only need the status code
-            settle(res.statusCode < 400); // 4xx/5xx counts as inactive, not just unreachable
-        });
-
-        req.on('timeout', () => {
-            req.destroy();
-            settle(false);
-        });
-
-        req.on('error', () => {
-            settle(false);
-        });
-    });
-}
-
-async function pollAllUrls() {
-    const apps = readData();
-    const results = await Promise.all(apps.map(async (app) => ({
-        id: app.id,
-        isActive: await checkUrl(app.url)
-    })));
-    results.forEach(({ id, isActive }) => {
-        urlStatus[id] = isActive;
-    });
-}
-
-function withLiveStatus(apps) {
-    return apps.map(app => ({
-        ...app,
-        isActive: urlStatus[app.id] === true
-    }));
-}
-
 // ==================== AUTHENTICATION MIDDLEWARE ====================
 function requireAuth(sessionId, type = 'admin') {
     return isValidSession(sessionId, type);
@@ -248,7 +180,7 @@ const server = http.createServer((req, res) => {
 
     // GET /data.json
     if (pathname === '/data.json') {
-        const data = withLiveStatus(readData());
+        const data = readData();
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(data));
         return;
@@ -410,7 +342,7 @@ const server = http.createServer((req, res) => {
 
     // GET /api/applications
     if (pathname === '/api/applications' && req.method === 'GET') {
-        const data = withLiveStatus(readData());
+        const data = readData();
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(data));
         return;
@@ -550,9 +482,6 @@ const server = http.createServer((req, res) => {
     res.writeHead(404, { 'Content-Type': 'text/plain' });
     res.end('404 - Not found');
 });
-
-pollAllUrls();
-setInterval(pollAllUrls, POLL_INTERVAL_MS);
 
 server.listen(PORT, () => {
     console.log(`

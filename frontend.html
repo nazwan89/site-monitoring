@@ -85,6 +85,7 @@
         let visibleCount = 0;
         const BATCH_SIZE = 12;
         const STATUS_REFRESH_INTERVAL_MS = 30 * 1000;
+        const URL_CHECK_TIMEOUT_MS = 5000;
 
         const lazyLoadObserver = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
@@ -180,19 +181,71 @@
                 const response = await fetch('/data.json');
                 if (!response.ok) throw new Error('Failed to load data');
                 const raw = await response.json();
+                const statusCache = loadStatusCache();
                 applications = raw.map(app => ({
                     ...app,
                     categories: normalizeCategories(app),
-                    credentials: normalizeCredentials(app)
+                    credentials: normalizeCredentials(app),
+                    isActive: statusCache[app.id] ?? null // last known status, unknown if never checked
                 }));
                 lazyLoadObserver.observe(document.getElementById('scrollSentinel'));
                 renderFilterTabs();
                 renderStats();
                 visibleCount = BATCH_SIZE;
                 renderApps();
+                refreshLiveStatuses();
             } catch (error) {
                 console.error('Error loading applications:', error);
             }
+        }
+
+        // ==================== LIVE STATUS (CHECKED FROM THIS BROWSER) ====================
+        // The server can't always reach internal/company URLs (DNS/network segregation on the
+        // deployment host), but staff browsers on the corporate network usually can. So status
+        // is checked client-side instead of trusting a server-computed value. Cross-origin fetch
+        // can't read the real HTTP status code (browser security), so this only distinguishes
+        // "responded at all" from "no response" — not 200 vs 500.
+        const STATUS_CACHE_KEY = 'appStatusCache';
+
+        function loadStatusCache() {
+            try {
+                return JSON.parse(localStorage.getItem(STATUS_CACHE_KEY)) || {};
+            } catch (error) {
+                console.error('Error reading status cache:', error.message);
+                return {};
+            }
+        }
+
+        function saveStatusToCache(appId, isActive) {
+            const cache = loadStatusCache();
+            cache[appId] = isActive;
+            localStorage.setItem(STATUS_CACHE_KEY, JSON.stringify(cache));
+        }
+
+        function checkUrlReachable(targetUrl, timeoutMs = URL_CHECK_TIMEOUT_MS) {
+            return new Promise((resolve) => {
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), timeoutMs);
+                fetch(targetUrl, { mode: 'no-cors', cache: 'no-store', signal: controller.signal })
+                    .then(() => resolve(true))
+                    .catch(() => resolve(false))
+                    .finally(() => clearTimeout(timer));
+            });
+        }
+
+        // Cards render immediately with cached/unknown status; each app's status updates on
+        // screen independently as soon as its own check resolves, without waiting on the others.
+        function refreshLiveStatuses() {
+            applications.forEach(app => {
+                checkUrlReachable(app.url).then(result => {
+                    app.isActive = result;
+                    saveStatusToCache(app.id, result);
+                    renderFilterTabs();
+                    const filtered = getFilteredApplications();
+                    renderStats(filtered);
+                    renderApps(filtered);
+                });
+            });
         }
 
         // ==================== FILTER TABS ====================
@@ -229,8 +282,8 @@
                 const matchesSearch = app.name.toLowerCase().includes(searchText) ||
                                     app.description.toLowerCase().includes(searchText);
                 const matchesStatus = statusValue === 'all' ||
-                    (statusValue === 'active' && app.isActive) ||
-                    (statusValue === 'inactive' && !app.isActive);
+                    (statusValue === 'active' && app.isActive === true) ||
+                    (statusValue === 'inactive' && app.isActive === false);
                 return matchesCategory && matchesSearch && matchesStatus;
             });
         }
@@ -242,22 +295,28 @@
             renderApps(filtered);
         }
 
-        // Background status refresh: re-fetches live isActive values without resetting
-        // search/filter/scroll state (unlike filterApps, which is for user-initiated changes).
+        // Background refresh: re-fetches the application list (to pick up admin add/edit/delete)
+        // without resetting search/filter/scroll state, then re-checks reachability from this
+        // browser. Previous known status is carried over so the UI doesn't flash back to
+        // "checking" every refresh cycle.
         async function refreshApplicationsData() {
             try {
                 const response = await fetch('/data.json');
                 if (!response.ok) return;
                 const raw = await response.json();
+                const previousStatus = Object.fromEntries(applications.map(a => [a.id, a.isActive]));
+                const statusCache = loadStatusCache();
                 applications = raw.map(app => ({
                     ...app,
                     categories: normalizeCategories(app),
-                    credentials: normalizeCredentials(app)
+                    credentials: normalizeCredentials(app),
+                    isActive: previousStatus[app.id] ?? statusCache[app.id] ?? null
                 }));
                 renderFilterTabs();
                 const filtered = getFilteredApplications();
                 renderStats(filtered);
                 renderApps(filtered);
+                refreshLiveStatuses();
             } catch (error) {
                 console.error('Error refreshing applications:', error);
             }
@@ -270,6 +329,12 @@
         }
 
         // ==================== RENDER APPLICATIONS ====================
+        function renderStatusBadge(isActive) {
+            if (isActive === true) return '<div class="active-badge">✓ Active</div>';
+            if (isActive === false) return '<div class="inactive-badge">✕ Inactive</div>';
+            return '<div class="checking-badge">⏳ Checking…</div>';
+        }
+
         function renderApps(filtered = applications) {
             currentFiltered = filtered;
             const grid = document.getElementById('applicationsGrid');
@@ -290,27 +355,31 @@
 
             const visibleApps = filtered.slice(0, visibleCount);
 
-            grid.innerHTML = visibleApps.map(app => `
-                <div class="app-card ${!app.isActive ? 'inactive-card' : ''}">
+            grid.innerHTML = visibleApps.map(app => {
+                const statusBadge = renderStatusBadge(app.isActive);
+                const usable = app.isActive === true;
+                return `
+                <div class="app-card ${app.isActive === false ? 'inactive-card' : ''}">
                     <div class="card-icon">${app.icon}</div>
                     <div class="card-name">${app.name}</div>
                     <div class="card-categories">${app.categories.map(c => `<span class="card-category">${c}</span>`).join('')}</div>
                     <div class="card-description" title="${app.description}">${app.description}</div>
                     <div class="card-footer">
-                        ${app.isActive ? '<div class="active-badge">✓ Active</div>' : '<div class="inactive-badge">✕ Inactive</div>'}
+                        ${statusBadge}
                         <div class="card-actions">
                             <button class="icon-btn copy-btn"
-                                    onclick="${app.isActive ? `requireLoginFor(() => showCredentials(${app.id}))` : 'return false;'}"
-                                    ${!app.isActive ? 'disabled' : ''}
-                                    title="${!app.isActive ? 'This app is inactive' : 'View credentials'}">🔑</button>
+                                    onclick="${usable ? `requireLoginFor(() => showCredentials(${app.id}))` : 'return false;'}"
+                                    ${!usable ? 'disabled' : ''}
+                                    title="${!usable ? 'This app is inactive' : 'View credentials'}">🔑</button>
                         </div>
                     </div>
                     <button class="launch-btn"
-                            onclick="${app.isActive ? `window.open('${app.url}', '_blank')` : 'return false;'}"
-                            ${!app.isActive ? 'disabled' : ''}
-                            title="${!app.isActive ? 'This app is inactive' : 'Launch application'}">🚀 Launch App</button>
+                            onclick="${usable ? `window.open('${app.url}', '_blank')` : 'return false;'}"
+                            ${!usable ? 'disabled' : ''}
+                            title="${!usable ? 'This app is inactive' : 'Launch application'}">🚀 Launch App</button>
                 </div>
-            `).join('');
+            `;
+            }).join('');
 
             toggleSentinel(visibleCount < filtered.length);
         }

@@ -223,6 +223,7 @@
         let currentPage = 1;
         let pageSize = 5;
         const BASE_CATEGORIES = ['Core Systems', 'CRM', 'Communication', 'Finance', 'Analytics & Data'];
+        const URL_CHECK_TIMEOUT_MS = 5000;
 
         // ==================== AUTHENTICATION ====================
         async function handleLogout() {
@@ -275,15 +276,65 @@
                 const response = await fetch('/data.json');
                 if (!response.ok) throw new Error('Failed to load data');
                 const raw = await response.json();
+                const previousStatus = Object.fromEntries(applications.map(a => [a.id, a.isActive]));
+                const statusCache = loadStatusCache();
                 applications = raw.map(app => ({
                     ...app,
                     categories: normalizeCategories(app),
-                    credentials: normalizeCredentials(app)
+                    credentials: normalizeCredentials(app),
+                    isActive: previousStatus[app.id] ?? statusCache[app.id] ?? null // last known status, unknown if never checked
                 }));
                 renderTable();
+                refreshLiveStatuses();
             } catch (error) {
                 showAlert('error', '❌ Error loading applications: ' + error.message);
             }
+        }
+
+        // ==================== LIVE STATUS (CHECKED FROM THIS BROWSER) ====================
+        // The server can't always reach internal/company URLs (DNS/network segregation on the
+        // deployment host), but staff browsers on the corporate network usually can. So status
+        // is checked client-side instead of trusting a server-computed value. Cross-origin fetch
+        // can't read the real HTTP status code (browser security), so this only distinguishes
+        // "responded at all" from "no response" — not 200 vs 500.
+        const STATUS_CACHE_KEY = 'appStatusCache';
+
+        function loadStatusCache() {
+            try {
+                return JSON.parse(localStorage.getItem(STATUS_CACHE_KEY)) || {};
+            } catch (error) {
+                console.error('Error reading status cache:', error.message);
+                return {};
+            }
+        }
+
+        function saveStatusToCache(appId, isActive) {
+            const cache = loadStatusCache();
+            cache[appId] = isActive;
+            localStorage.setItem(STATUS_CACHE_KEY, JSON.stringify(cache));
+        }
+
+        function checkUrlReachable(targetUrl, timeoutMs = URL_CHECK_TIMEOUT_MS) {
+            return new Promise((resolve) => {
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), timeoutMs);
+                fetch(targetUrl, { mode: 'no-cors', cache: 'no-store', signal: controller.signal })
+                    .then(() => resolve(true))
+                    .catch(() => resolve(false))
+                    .finally(() => clearTimeout(timer));
+            });
+        }
+
+        // Rows render immediately with cached/unknown status; each app's status updates on
+        // screen independently as soon as its own check resolves, without waiting on the others.
+        function refreshLiveStatuses() {
+            applications.forEach(app => {
+                checkUrlReachable(app.url).then(result => {
+                    app.isActive = result;
+                    saveStatusToCache(app.id, result);
+                    renderTable();
+                });
+            });
         }
 
         // ==================== FILTER & SORT ====================
@@ -324,8 +375,8 @@
                     app.categories.some(c => c.toLowerCase().includes(searchText)) ||
                     app.description.toLowerCase().includes(searchText);
                 const matchesStatus = statusValue === 'all' ||
-                    (statusValue === 'active' && app.isActive) ||
-                    (statusValue === 'inactive' && !app.isActive);
+                    (statusValue === 'active' && app.isActive === true) ||
+                    (statusValue === 'inactive' && app.isActive === false);
                 return matchesSearch && matchesStatus;
             });
 
@@ -345,6 +396,12 @@
         }
 
         // ==================== RENDER TABLE ====================
+        function renderStatusBadge(isActive) {
+            if (isActive === true) return '<span class="status-badge status-active">✓ Active</span>';
+            if (isActive === false) return '<span class="status-badge status-inactive">✗ Inactive</span>';
+            return '<span class="status-badge status-checking">⏳ Checking…</span>';
+        }
+
         function renderTable() {
             const tbody = document.getElementById('applicationsTable');
             updateSortIndicators();
@@ -396,7 +453,7 @@
                     <td>${app.categories.map(c => `<span class="category-tag">${c}</span>`).join('')}</td>
                     <td class="description-cell" title="${app.description}">${app.description}</td>
                     <td><a href="${app.url}" target="_blank" style="color: #64c8ff; text-decoration: none;">Open →</a></td>
-                    <td><span class="status-badge ${app.isActive ? 'status-active' : 'status-inactive'}">${app.isActive ? '✓ Active' : '✗ Inactive'}</span></td>
+                    <td>${renderStatusBadge(app.isActive)}</td>
                     <td>
                         <div class="action-buttons">
                             <button class="btn btn-edit" onclick="openEditModal(${app.id})">✏️ Edit</button>
