@@ -831,11 +831,12 @@
 
         // ==================== ADD MODAL ====================
         function openAddModal() {
+            document.getElementById('icon').value = '🖥';
             renderCategoryCheckboxes('categoryCheckboxes', 'categoryMultiselectText');
             document.getElementById('newCategory').value = '';
             document.getElementById('categoryMultiselect').classList.remove('open');
-            resetUrlSets('urlSets');
-            resetCredentialSets('credentialSets');
+            resetUrlSets('urlSets', [{ label: 'Main', url: '' }]);
+            resetCredentialSets('credentialSets', [{ label: 'Main', username: '', password: '', extraFields: [] }]);
             document.getElementById('addModal').classList.add('show');
         }
 
