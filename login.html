@@ -8,14 +8,22 @@
     <script>
         (function() {
             var pref = localStorage.getItem('theme') || 'system';
-            if (pref === 'light' || pref === 'dark') {
+            if (['light', 'dark', 'neumorphic-light', 'neumorphic-dark'].indexOf(pref) !== -1) {
                 document.documentElement.setAttribute('data-theme', pref);
             }
         })();
     </script>
 </head>
 <body>
-    <button type="button" class="theme-select theme-select-corner" id="themeToggle" title="Toggle theme">🌙</button>
+    <div class="theme-picker theme-select-corner">
+        <button type="button" class="theme-select" id="themeToggle" title="Choose theme">🌙</button>
+        <div class="theme-menu" id="themeMenu">
+            <button type="button" class="theme-menu-item" data-theme-value="light" title="Light">☀️</button>
+            <button type="button" class="theme-menu-item" data-theme-value="dark" title="Dark">🌙</button>
+            <button type="button" class="theme-menu-item" data-theme-value="neumorphic-light" title="Neumorphic Light">🫧</button>
+            <button type="button" class="theme-menu-item" data-theme-value="neumorphic-dark" title="Neumorphic Dark">🌑</button>
+        </div>
+    </div>
     <div class="main-container">
         <div class="login-container">
             <div class="login-card">
@@ -45,22 +53,27 @@
 
     <script>
         // ==================== THEME ====================
-        // No explicit UI choice for "system" — an explicit light/dark pick is stored and wins;
-        // absent that, the theme silently tracks the OS preference (including live changes).
+        // No explicit UI choice for "system" — an explicit pick is stored and wins; absent
+        // that, the theme silently tracks the OS light/dark preference (including live
+        // changes). The neumorphic variants are a preview here on the login page only — they're
+        // never chosen automatically, only by picking them from the menu.
+        const THEME_ICONS = { light: '☀️', dark: '🌙', 'neumorphic-light': '🫧', 'neumorphic-dark': '🌑' };
+        const EXPLICIT_THEMES = Object.keys(THEME_ICONS);
+
         function getEffectiveTheme() {
             const stored = localStorage.getItem('theme');
-            if (stored === 'light' || stored === 'dark') return stored;
+            if (EXPLICIT_THEMES.indexOf(stored) !== -1) return stored;
             return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
         }
 
         function updateThemeIcon() {
             const btn = document.getElementById('themeToggle');
-            if (btn) btn.textContent = getEffectiveTheme() === 'light' ? '☀️' : '🌙';
+            if (btn) btn.textContent = THEME_ICONS[getEffectiveTheme()];
         }
 
         function applyTheme() {
             const stored = localStorage.getItem('theme');
-            if (stored === 'light' || stored === 'dark') {
+            if (EXPLICIT_THEMES.indexOf(stored) !== -1) {
                 document.documentElement.setAttribute('data-theme', stored);
             } else {
                 document.documentElement.removeAttribute('data-theme');
@@ -68,21 +81,36 @@
             updateThemeIcon();
         }
 
-        function toggleTheme() {
-            localStorage.setItem('theme', getEffectiveTheme() === 'light' ? 'dark' : 'light');
+        function selectTheme(value) {
+            localStorage.setItem('theme', value);
             applyTheme();
+            closeThemeMenu();
+        }
+
+        function toggleThemeMenu(event) {
+            event.stopPropagation();
+            document.getElementById('themeMenu').classList.toggle('show');
+        }
+
+        function closeThemeMenu() {
+            document.getElementById('themeMenu').classList.remove('show');
         }
 
         function initThemeToggle() {
             const btn = document.getElementById('themeToggle');
-            if (!btn) return;
-            btn.addEventListener('click', toggleTheme);
+            const menu = document.getElementById('themeMenu');
+            if (!btn || !menu) return;
+            btn.addEventListener('click', toggleThemeMenu);
+            menu.querySelectorAll('.theme-menu-item').forEach(item => {
+                item.addEventListener('click', () => selectTheme(item.dataset.themeValue));
+            });
+            document.addEventListener('click', closeThemeMenu);
             updateThemeIcon();
         }
 
         window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
             const stored = localStorage.getItem('theme');
-            if (stored !== 'light' && stored !== 'dark') applyTheme();
+            if (EXPLICIT_THEMES.indexOf(stored) === -1) applyTheme();
         });
 
         async function tryLogin(endpoint, password) {

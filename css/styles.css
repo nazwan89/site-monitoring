@@ -117,6 +117,280 @@
             }
         }
 
+        /* ==================== NEUMORPHIC THEMES (preview — login page only) ==================== */
+        /* Soft-UI look: flat monochrome surface, no blur/transparency, shapes read as raised or
+           pressed-in purely through a paired light/dark shadow instead of borders or blur.
+           --neu-light/--neu-dark are the two shadow colors; every component rule below is
+           written once against them and shared by both the light and dark variant. */
+        :root[data-theme="neumorphic-light"] {
+            --bg-body: #e6e9f0;
+            --bg-panel: #e6e9f0;
+            --bg-panel-strong: #e6e9f0;
+            --bg-input: #e6e9f0;
+            --bg-input-focus: #e6e9f0;
+            --bg-input-subtle: #e6e9f0;
+            --text-primary: #3a4560;
+            --text-secondary: #8993ab;
+            --text-label: #5b6584;
+            --text-placeholder: #a3acc2;
+            --text-accent: #6c7fd8;
+            --border-faint: transparent;
+            --border-subtle: transparent;
+            --border-default: transparent;
+            --border-medium: transparent;
+            --border-strong: transparent;
+            --border-stronger: transparent;
+            --glass-blur: none;
+            --glass-blur-soft: none;
+            --neu-light: rgba(255, 255, 255, 0.85);
+            --neu-dark: rgba(163, 177, 198, 0.55);
+            --neu-bg-1: #f7f9fc;
+            --neu-bg-2: #e6e9f0;
+            --neu-bg-3: #c3cade;
+        }
+
+        :root[data-theme="neumorphic-dark"] {
+            --bg-body: #2b2f3a;
+            --bg-panel: #2b2f3a;
+            --bg-panel-strong: #2b2f3a;
+            --bg-input: #2b2f3a;
+            --bg-input-focus: #2b2f3a;
+            --bg-input-subtle: #2b2f3a;
+            --text-primary: #e4e7f0;
+            --text-secondary: #9199b0;
+            --text-label: #b7bdd6;
+            --text-placeholder: #6b7288;
+            --text-accent: #8b9cf0;
+            --border-faint: transparent;
+            --border-subtle: transparent;
+            --border-default: transparent;
+            --border-medium: transparent;
+            --border-strong: transparent;
+            --border-stronger: transparent;
+            --glass-blur: none;
+            --glass-blur-soft: none;
+            --neu-light: rgba(58, 64, 82, 0.7);
+            --neu-dark: rgba(8, 9, 13, 0.7);
+            --neu-bg-1: #454c63;
+            --neu-bg-2: #2b2f3a;
+            --neu-bg-3: #101217;
+        }
+
+        :root[data-theme="neumorphic-light"] body::before {
+            background:
+                radial-gradient(2px 2px at 20% 30%, rgba(255, 255, 255, 0.8), rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 60% 70%, rgba(255, 255, 255, 0.7), rgba(0,0,0,0)),
+                radial-gradient(1px 1px at 50% 50%, rgba(163, 177, 198, 0.3), rgba(0,0,0,0)),
+                radial-gradient(1px 1px at 80% 10%, rgba(255, 255, 255, 0.6), rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 90% 60%, rgba(255, 255, 255, 0.7), rgba(0,0,0,0)),
+                radial-gradient(1px 1px at 30% 80%, rgba(163, 177, 198, 0.3), rgba(0,0,0,0)),
+                radial-gradient(1px 1px at 70% 40%, rgba(255, 255, 255, 0.6), rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 10% 90%, rgba(255, 255, 255, 0.7), rgba(0,0,0,0)),
+                linear-gradient(var(--neu-bg-1) 0%, var(--neu-bg-2) 50%, var(--neu-bg-3) 100%);
+        }
+
+        :root[data-theme="neumorphic-dark"] body::before {
+            background:
+                radial-gradient(2px 2px at 20% 30%, rgba(255, 255, 255, 0.08), rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 60% 70%, rgba(255, 255, 255, 0.06), rgba(0,0,0,0)),
+                radial-gradient(1px 1px at 50% 50%, rgba(0, 0, 0, 0.4), rgba(0,0,0,0)),
+                radial-gradient(1px 1px at 80% 10%, rgba(255, 255, 255, 0.05), rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 90% 60%, rgba(255, 255, 255, 0.06), rgba(0,0,0,0)),
+                radial-gradient(1px 1px at 30% 80%, rgba(0, 0, 0, 0.4), rgba(0,0,0,0)),
+                radial-gradient(1px 1px at 70% 40%, rgba(255, 255, 255, 0.05), rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 10% 90%, rgba(255, 255, 255, 0.06), rgba(0,0,0,0)),
+                linear-gradient(var(--neu-bg-1) 0%, var(--neu-bg-2) 50%, var(--neu-bg-3) 100%);
+        }
+
+        [data-theme^="neumorphic"] .login-card {
+            border: none;
+            box-shadow: 20px 20px 40px var(--neu-dark), -20px -20px 40px var(--neu-light);
+        }
+
+        [data-theme^="neumorphic"] .login-icon {
+            background: var(--bg-body);
+            box-shadow: 8px 8px 16px var(--neu-dark), -8px -8px 16px var(--neu-light);
+        }
+
+        [data-theme^="neumorphic"] .form-group input {
+            border: none;
+            box-shadow: inset 6px 6px 12px var(--neu-dark), inset -6px -6px 12px var(--neu-light);
+        }
+
+        [data-theme^="neumorphic"] .form-group input:focus {
+            box-shadow: inset 7px 7px 14px var(--neu-dark), inset -7px -7px 14px var(--neu-light);
+        }
+
+        [data-theme^="neumorphic"] .login-btn {
+            background: var(--bg-body);
+            color: var(--text-primary);
+            box-shadow: 8px 8px 16px var(--neu-dark), -8px -8px 16px var(--neu-light);
+        }
+
+        [data-theme^="neumorphic"] .login-btn:hover:not(:disabled) {
+            transform: none;
+            box-shadow: 10px 10px 20px var(--neu-dark), -10px -10px 20px var(--neu-light);
+        }
+
+        [data-theme^="neumorphic"] .login-btn:active:not(:disabled) {
+            box-shadow: inset 4px 4px 8px var(--neu-dark), inset -4px -4px 8px var(--neu-light);
+        }
+
+        [data-theme^="neumorphic"] .login-info {
+            background: var(--bg-body);
+            border: none;
+            box-shadow: inset 4px 4px 8px var(--neu-dark), inset -4px -4px 8px var(--neu-light);
+        }
+
+        [data-theme^="neumorphic"] .login-info code {
+            background: var(--bg-body);
+            box-shadow: inset 2px 2px 4px var(--neu-dark), inset -2px -2px 4px var(--neu-light);
+        }
+
+        [data-theme^="neumorphic"] .theme-select {
+            box-shadow: 4px 4px 8px var(--neu-dark), -4px -4px 8px var(--neu-light);
+        }
+
+        /* Neumorphic — portal & admin surfaces (raised panels) */
+        [data-theme^="neumorphic"] .header,
+        [data-theme^="neumorphic"] .controls,
+        [data-theme^="neumorphic"] .stats,
+        [data-theme^="neumorphic"] .app-card,
+        [data-theme^="neumorphic"] .main-content {
+            box-shadow: 8px 8px 16px var(--neu-dark), -8px -8px 16px var(--neu-light);
+        }
+
+        [data-theme^="neumorphic"] .app-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 10px 10px 20px var(--neu-dark), -10px -10px 20px var(--neu-light);
+        }
+
+        [data-theme^="neumorphic"] .app-card.inactive-card,
+        [data-theme^="neumorphic"] .app-card.inactive-card:hover {
+            transform: none;
+            box-shadow: inset 6px 6px 12px var(--neu-dark), inset -6px -6px 12px var(--neu-light);
+        }
+
+        [data-theme^="neumorphic"] .modal-content {
+            box-shadow: 20px 20px 40px var(--neu-dark), -20px -20px 40px var(--neu-light);
+        }
+
+        [data-theme^="neumorphic"] .credential-row,
+        [data-theme^="neumorphic"] .credential-set {
+            box-shadow: inset 4px 4px 8px var(--neu-dark), inset -4px -4px 8px var(--neu-light);
+        }
+
+        [data-theme^="neumorphic"] .card-divider {
+            border-top: 1px solid var(--neu-dark);
+        }
+
+        [data-theme^="neumorphic"] th,
+        [data-theme^="neumorphic"] td {
+            border-bottom: 1px solid var(--neu-dark);
+        }
+
+        /* Neumorphic — inputs (pressed-in) */
+        [data-theme^="neumorphic"] .search-input,
+        [data-theme^="neumorphic"] .filter-select,
+        [data-theme^="neumorphic"] .form-group-full input,
+        [data-theme^="neumorphic"] .form-group-full select,
+        [data-theme^="neumorphic"] .form-group-full textarea,
+        [data-theme^="neumorphic"] .multiselect-trigger,
+        [data-theme^="neumorphic"] .credential-set input,
+        [data-theme^="neumorphic"] .url-set input,
+        [data-theme^="neumorphic"] .new-category-row input,
+        [data-theme^="neumorphic"] .rows-per-page select {
+            box-shadow: inset 6px 6px 12px var(--neu-dark), inset -6px -6px 12px var(--neu-light);
+        }
+
+        [data-theme^="neumorphic"] .search-input:focus,
+        [data-theme^="neumorphic"] .filter-select:focus,
+        [data-theme^="neumorphic"] .form-group-full input:focus,
+        [data-theme^="neumorphic"] .form-group-full select:focus,
+        [data-theme^="neumorphic"] .form-group-full textarea:focus,
+        [data-theme^="neumorphic"] .multiselect.open .multiselect-trigger,
+        [data-theme^="neumorphic"] .credential-set input:focus,
+        [data-theme^="neumorphic"] .url-set input:focus,
+        [data-theme^="neumorphic"] .new-category-row input:focus,
+        [data-theme^="neumorphic"] .rows-per-page select:focus {
+            box-shadow: inset 7px 7px 14px var(--neu-dark), inset -7px -7px 14px var(--neu-light);
+        }
+
+        /* Neumorphic — buttons (flattened, raised) */
+        [data-theme^="neumorphic"] .btn,
+        [data-theme^="neumorphic"] .logout-btn,
+        [data-theme^="neumorphic"] .admin-console-btn,
+        [data-theme^="neumorphic"] .launch-btn,
+        [data-theme^="neumorphic"] .icon-btn,
+        [data-theme^="neumorphic"] .copy-btn,
+        [data-theme^="neumorphic"] .page-btn,
+        [data-theme^="neumorphic"] .filter-tab,
+        [data-theme^="neumorphic"] .category-checkbox,
+        [data-theme^="neumorphic"] .reveal-btn {
+            background: var(--bg-body);
+            color: var(--text-primary);
+            box-shadow: 6px 6px 12px var(--neu-dark), -6px -6px 12px var(--neu-light);
+        }
+
+        [data-theme^="neumorphic"] .btn:hover:not(:disabled),
+        [data-theme^="neumorphic"] .logout-btn:hover:not(:disabled),
+        [data-theme^="neumorphic"] .admin-console-btn:hover:not(:disabled),
+        [data-theme^="neumorphic"] .launch-btn:hover:not(:disabled),
+        [data-theme^="neumorphic"] .icon-btn:hover:not(:disabled),
+        [data-theme^="neumorphic"] .copy-btn:hover:not(:disabled),
+        [data-theme^="neumorphic"] .page-btn:hover:not(:disabled),
+        [data-theme^="neumorphic"] .filter-tab:hover,
+        [data-theme^="neumorphic"] .category-checkbox:hover,
+        [data-theme^="neumorphic"] .reveal-btn:hover:not(:disabled) {
+            transform: none;
+            box-shadow: 8px 8px 16px var(--neu-dark), -8px -8px 16px var(--neu-light);
+        }
+
+        [data-theme^="neumorphic"] .btn:active:not(:disabled),
+        [data-theme^="neumorphic"] .logout-btn:active:not(:disabled),
+        [data-theme^="neumorphic"] .admin-console-btn:active:not(:disabled),
+        [data-theme^="neumorphic"] .launch-btn:active:not(:disabled),
+        [data-theme^="neumorphic"] .icon-btn:active:not(:disabled),
+        [data-theme^="neumorphic"] .copy-btn:active:not(:disabled),
+        [data-theme^="neumorphic"] .page-btn:active:not(:disabled),
+        [data-theme^="neumorphic"] .filter-tab:active,
+        [data-theme^="neumorphic"] .category-checkbox:active,
+        [data-theme^="neumorphic"] .reveal-btn:active:not(:disabled) {
+            box-shadow: inset 3px 3px 6px var(--neu-dark), inset -3px -3px 6px var(--neu-light);
+        }
+
+        [data-theme^="neumorphic"] .launch-btn:disabled,
+        [data-theme^="neumorphic"] .icon-btn:disabled,
+        [data-theme^="neumorphic"] .copy-btn:disabled,
+        [data-theme^="neumorphic"] .page-btn:disabled {
+            background: var(--bg-body);
+            box-shadow: inset 4px 4px 8px var(--neu-dark), inset -4px -4px 8px var(--neu-light);
+        }
+
+        [data-theme^="neumorphic"] .btn-primary,
+        [data-theme^="neumorphic"] .admin-console-btn,
+        [data-theme^="neumorphic"] .launch-btn,
+        [data-theme^="neumorphic"] .btn-edit,
+        [data-theme^="neumorphic"] .filter-tab.active,
+        [data-theme^="neumorphic"] .page-btn.active {
+            color: var(--text-accent);
+        }
+
+        [data-theme^="neumorphic"] .btn-logout,
+        [data-theme^="neumorphic"] .logout-btn,
+        [data-theme^="neumorphic"] .btn-delete {
+            color: var(--text-danger);
+        }
+
+        [data-theme^="neumorphic"] .btn-neutral {
+            color: var(--text-label);
+        }
+
+        [data-theme^="neumorphic"] .launch-menu,
+        [data-theme^="neumorphic"] .multiselect-panel {
+            box-shadow: 8px 8px 16px var(--neu-dark), -8px -8px 16px var(--neu-light);
+        }
+
         :root[data-theme="light"] body::before {
             background:
                 radial-gradient(2px 2px at 20% 30%, rgba(74, 125, 217, 0.3), rgba(0,0,0,0)),
@@ -687,6 +961,45 @@
             top: 20px;
             right: 20px;
             z-index: 100;
+        }
+
+        .theme-menu {
+            display: none;
+            position: absolute;
+            top: 0;
+            right: calc(100% + 8px);
+            background: var(--bg-dropdown);
+            border: 1px solid var(--border-medium);
+            border-radius: 10px;
+            overflow: hidden;
+            z-index: 10;
+            box-shadow: 0 12px 32px var(--shadow-strong);
+        }
+
+        .theme-menu.show {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .theme-menu-item {
+            width: 42px;
+            height: 42px;
+            padding: 0;
+            font-size: 18px;
+            text-align: center;
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .theme-menu-item:hover {
+            background: var(--bg-chip-hover);
+        }
+
+        .theme-menu-item + .theme-menu-item {
+            border-top: 1px solid var(--border-faint);
         }
 
         .filter-tabs {
