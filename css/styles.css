@@ -782,6 +782,56 @@
             transform: none;
         }
 
+        .launch-dropdown {
+            position: relative;
+        }
+
+        .launch-menu {
+            display: none;
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            margin-bottom: 8px;
+            background: #1a2a4a;
+            border: 1px solid rgba(100, 150, 255, 0.3);
+            border-radius: 8px;
+            overflow: hidden;
+            z-index: 10;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        }
+
+        .launch-menu.show {
+            display: block;
+        }
+
+        .launch-menu-item {
+            display: block;
+            width: 100%;
+            padding: 10px 14px;
+            font-size: 13px;
+            text-align: left;
+            background: none;
+            border: none;
+            color: #e0e6ff;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .launch-menu-item:hover:not(:disabled) {
+            background: rgba(100, 150, 255, 0.15);
+        }
+
+        .launch-menu-item:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            color: #668899;
+        }
+
+        .launch-menu-item + .launch-menu-item {
+            border-top: 1px solid rgba(100, 150, 255, 0.1);
+        }
+
         /* Modal */
         .modal {
             display: none;
@@ -1365,6 +1415,43 @@
         }
 
         .credential-set input:focus {
+            outline: none;
+            border-color: #64c8ff;
+            box-shadow: 0 0 0 3px rgba(100, 200, 255, 0.1);
+        }
+
+        .url-sets {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .url-set {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .url-set input[type="text"] {
+            flex: 0 0 160px;
+        }
+
+        .url-set input[type="url"] {
+            flex: 1;
+        }
+
+        .url-set input[type="text"],
+        .url-set input[type="url"] {
+            padding: 8px 12px;
+            border: 1px solid rgba(100, 150, 255, 0.3);
+            border-radius: 6px;
+            font-size: 13px;
+            background: rgba(30, 40, 60, 0.6);
+            color: #e0e6ff;
+        }
+
+        .url-set input:focus {
             outline: none;
             border-color: #64c8ff;
             box-shadow: 0 0 0 3px rgba(100, 200, 255, 0.1);

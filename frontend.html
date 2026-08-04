@@ -168,6 +168,12 @@
             return [];
         }
 
+        function normalizeUrls(app) {
+            if (Array.isArray(app.urls) && app.urls.length) return app.urls;
+            if (app.url) return [{ label: 'Default', url: app.url }];
+            return [];
+        }
+
         function escapeHtml(str) {
             return String(str)
                 .replace(/&/g, '&amp;')
@@ -186,6 +192,7 @@
                     ...app,
                     categories: normalizeCategories(app),
                     credentials: normalizeCredentials(app),
+                    urls: normalizeUrls(app),
                     isActive: statusCache[app.id] ?? null // last known status, unknown if never checked
                 }));
                 lazyLoadObserver.observe(document.getElementById('scrollSentinel'));
@@ -233,13 +240,22 @@
             });
         }
 
+        // Checks every URL individually (so the launch menu can disable specific dead links)
+        // and also returns the aggregate — an app with multiple URLs counts as active overall
+        // if any one of them responds.
+        function checkAppReachable(app) {
+            return Promise.all(app.urls.map(u => checkUrlReachable(u.url)))
+                .then(urlStatuses => ({ urlStatuses, isActive: urlStatuses.some(reachable => reachable) }));
+        }
+
         // Cards render immediately with cached/unknown status; each app's status updates on
         // screen independently as soon as its own check resolves, without waiting on the others.
         function refreshLiveStatuses() {
             applications.forEach(app => {
-                checkUrlReachable(app.url).then(result => {
-                    app.isActive = result;
-                    saveStatusToCache(app.id, result);
+                checkAppReachable(app).then(({ urlStatuses, isActive }) => {
+                    app.isActive = isActive;
+                    app.urlStatuses = urlStatuses;
+                    saveStatusToCache(app.id, isActive);
                     renderFilterTabs();
                     const filtered = getFilteredApplications();
                     renderStats(filtered);
@@ -310,6 +326,7 @@
                     ...app,
                     categories: normalizeCategories(app),
                     credentials: normalizeCredentials(app),
+                    urls: normalizeUrls(app),
                     isActive: previousStatus[app.id] ?? statusCache[app.id] ?? null
                 }));
                 renderFilterTabs();
@@ -337,6 +354,62 @@
             const onclick = usable ? `requireLoginFor(() => showCredentials(${app.id}))` : 'return false;';
             return `<button class="icon-btn copy-btn card-key-btn" onclick="${onclick}" ${disabledAttr} title="${title}">🔑</button>`;
         }
+
+        // Single-URL apps get a plain Launch App button. Apps with more than one URL get a
+        // dropdown button instead: clicking it reveals one button per URL underneath.
+        function renderLaunchRow(app, usable) {
+            const disabledAttr = usable ? '' : 'disabled';
+            const title = usable ? 'Launch application' : 'This app is inactive';
+            if (app.urls.length <= 1) {
+                const onclick = usable ? `launchApp(${app.id})` : 'return false;';
+                return `<button class="launch-btn" onclick="${onclick}" ${disabledAttr} title="${title}">🚀 Launch App</button>`;
+            }
+            const toggleOnclick = usable ? `toggleLaunchMenu(event, ${app.id})` : 'return false;';
+            const menuItems = app.urls.map((u, idx) => {
+                const urlUsable = app.urlStatuses ? app.urlStatuses[idx] === true : false;
+                const itemDisabledAttr = urlUsable ? '' : 'disabled';
+                const itemTitle = urlUsable ? `Launch ${escapeHtml(u.label)}` : 'This URL is not responding';
+                const itemOnclick = urlUsable ? `launchAppUrl(${app.id}, ${idx})` : 'return false;';
+                return `<button type="button" class="launch-menu-item" onclick="${itemOnclick}" ${itemDisabledAttr} title="${itemTitle}">${escapeHtml(u.label)}</button>`;
+            }).join('');
+            return `
+                <div class="launch-dropdown">
+                    <button class="launch-btn" onclick="${toggleOnclick}" ${disabledAttr} title="${title}">🚀 Launch App ▾</button>
+                    <div class="launch-menu" id="launchMenu-${app.id}">${menuItems}</div>
+                </div>
+            `;
+        }
+
+        function launchApp(appId) {
+            const app = applications.find(a => a.id === appId);
+            if (!app || !app.urls.length) return;
+            window.open(app.urls[0].url, '_blank');
+        }
+
+        function launchAppUrl(appId, index) {
+            const app = applications.find(a => a.id === appId);
+            if (!app || !app.urls[index]) return;
+            window.open(app.urls[index].url, '_blank');
+            closeLaunchMenu(appId);
+        }
+
+        function toggleLaunchMenu(event, appId) {
+            event.stopPropagation();
+            const menu = document.getElementById(`launchMenu-${appId}`);
+            if (!menu) return;
+            const isOpen = menu.classList.contains('show');
+            document.querySelectorAll('.launch-menu.show').forEach(m => m.classList.remove('show'));
+            if (!isOpen) menu.classList.add('show');
+        }
+
+        function closeLaunchMenu(appId) {
+            const menu = document.getElementById(`launchMenu-${appId}`);
+            if (menu) menu.classList.remove('show');
+        }
+
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.launch-menu.show').forEach(m => m.classList.remove('show'));
+        });
 
         function renderApps(filtered = applications) {
             currentFiltered = filtered;
@@ -371,10 +444,7 @@
                     <div class="card-categories">${app.categories.map(c => `<span class="card-category">${c}</span>`).join('')}</div>
                     <div class="card-description" title="${app.description}">${app.description}</div>
                     <div class="card-divider"></div>
-                    <button class="launch-btn"
-                            onclick="${usable ? `window.open('${app.url}', '_blank')` : 'return false;'}"
-                            ${!usable ? 'disabled' : ''}
-                            title="${!usable ? 'This app is inactive' : 'Launch application'}">🚀 Launch App</button>
+                    ${renderLaunchRow(app, usable)}
                 </div>
             `;
             }).join('');
@@ -438,7 +508,7 @@
 
             document.getElementById('modalTitle').textContent = `${app.name} Credentials`;
 
-            let html = renderFieldRow('URL', app.url, false, 'url');
+            let html = app.urls.map((u, idx) => renderFieldRow(u.label, u.url, false, `url-${idx}`)).join('');
             html += app.credentials.map((cred, idx) => renderCredentialSetDisplay(cred, idx)).join('');
 
             document.getElementById('credentialFieldsDisplay').innerHTML = html;

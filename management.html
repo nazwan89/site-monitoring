@@ -126,10 +126,11 @@
                         </div>
                     </div>
 
-                    <div class="form-group-full">
-                        <label>Application URL *</label>
-                        <input type="url" id="url" placeholder="https://example.com" required>
-                        <p class="field-hint">Status is checked automatically — active/inactive is determined by whether this URL responds.</p>
+                    <div class="form-group-full form-group-span">
+                        <label>Application URL(s) * (one or more)</label>
+                        <div class="url-sets" id="urlSets"></div>
+                        <button type="button" class="btn btn-neutral btn-small" onclick="addUrlSet('urlSets')">➕ Add URL</button>
+                        <p class="field-hint">Status is checked automatically — active/inactive is determined by whether any URL responds.</p>
                     </div>
 
                     <div class="form-group-full form-group-span">
@@ -189,10 +190,11 @@
                         </div>
                     </div>
 
-                    <div class="form-group-full">
-                        <label>Application URL *</label>
-                        <input type="url" id="editUrl" required>
-                        <p class="field-hint">Status is checked automatically — active/inactive is determined by whether this URL responds.</p>
+                    <div class="form-group-full form-group-span">
+                        <label>Application URL(s) * (one or more)</label>
+                        <div class="url-sets" id="editUrlSets"></div>
+                        <button type="button" class="btn btn-neutral btn-small" onclick="addUrlSet('editUrlSets')">➕ Add URL</button>
+                        <p class="field-hint">Status is checked automatically — active/inactive is determined by whether any URL responds.</p>
                     </div>
 
                     <div class="form-group-full form-group-span">
@@ -263,6 +265,12 @@
             return [];
         }
 
+        function normalizeUrls(app) {
+            if (Array.isArray(app.urls) && app.urls.length) return app.urls;
+            if (app.url) return [{ label: 'Default', url: app.url }];
+            return [];
+        }
+
         function escapeAttr(str) {
             return String(str)
                 .replace(/&/g, '&amp;')
@@ -282,6 +290,7 @@
                     ...app,
                     categories: normalizeCategories(app),
                     credentials: normalizeCredentials(app),
+                    urls: normalizeUrls(app),
                     isActive: previousStatus[app.id] ?? statusCache[app.id] ?? null // last known status, unknown if never checked
                 }));
                 renderTable();
@@ -325,11 +334,17 @@
             });
         }
 
+        // An app with multiple URLs counts as active if any one of them responds.
+        function checkAppReachable(app) {
+            return Promise.all(app.urls.map(u => checkUrlReachable(u.url)))
+                .then(results => results.some(reachable => reachable));
+        }
+
         // Rows render immediately with cached/unknown status; each app's status updates on
         // screen independently as soon as its own check resolves, without waiting on the others.
         function refreshLiveStatuses() {
             applications.forEach(app => {
-                checkUrlReachable(app.url).then(result => {
+                checkAppReachable(app).then(result => {
                     app.isActive = result;
                     saveStatusToCache(app.id, result);
                     renderTable();
@@ -402,6 +417,13 @@
             return '<span class="status-badge status-checking">⏳ Checking…</span>';
         }
 
+        function renderUrlCell(urls) {
+            if (!urls || urls.length === 0) return '';
+            return urls.map(u =>
+                `<a href="${escapeAttr(u.url)}" target="_blank" style="color: #64c8ff; text-decoration: none; display: block;">${escapeAttr(u.label)} →</a>`
+            ).join('');
+        }
+
         function renderTable() {
             const tbody = document.getElementById('applicationsTable');
             updateSortIndicators();
@@ -452,7 +474,7 @@
                     <td><strong>${app.name}</strong></td>
                     <td>${app.categories.map(c => `<span class="category-tag">${c}</span>`).join('')}</td>
                     <td class="description-cell" title="${app.description}">${app.description}</td>
-                    <td><a href="${app.url}" target="_blank" style="color: #64c8ff; text-decoration: none;">Open →</a></td>
+                    <td>${renderUrlCell(app.urls)}</td>
                     <td>${renderStatusBadge(app.isActive)}</td>
                     <td>
                         <div class="action-buttons">
@@ -717,6 +739,45 @@
             });
         }
 
+        // ==================== URL SETS ====================
+        function addUrlSet(containerId, data = {}) {
+            const container = document.getElementById(containerId);
+            const set = document.createElement('div');
+            set.className = 'url-set';
+            set.innerHTML = `
+                <input type="text" class="url-label" placeholder="Label (e.g., Production) *" value="${escapeAttr(data.label || '')}" required>
+                <input type="url" class="url-value" placeholder="https://example.com" value="${escapeAttr(data.url || '')}" required>
+                <button type="button" class="icon-btn btn-delete" onclick="removeUrlSet(this)" title="Remove URL">🗑️</button>
+            `;
+            container.appendChild(set);
+        }
+
+        function removeUrlSet(btn) {
+            const container = btn.closest('.url-sets');
+            if (container.querySelectorAll('.url-set').length <= 1) {
+                showAlert('error', '❌ At least one URL is required');
+                return;
+            }
+            btn.closest('.url-set').remove();
+        }
+
+        function resetUrlSets(containerId, sets) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            if (sets && sets.length) {
+                sets.forEach(u => addUrlSet(containerId, u));
+            } else {
+                addUrlSet(containerId);
+            }
+        }
+
+        function getUrlSets(containerId) {
+            return Array.from(document.querySelectorAll(`#${containerId} .url-set`)).map(setEl => ({
+                label: setEl.querySelector('.url-label').value.trim(),
+                url: setEl.querySelector('.url-value').value.trim()
+            }));
+        }
+
         // ==================== ADD APPLICATION ====================
         async function addApplication(event) {
             event.preventDefault();
@@ -733,13 +794,19 @@
                 return;
             }
 
+            const urls = getUrlSets('urlSets');
+            if (urls.length === 0) {
+                showAlert('error', '❌ Please add at least one URL');
+                return;
+            }
+
             const newApp = {
                 id: Math.max(...applications.map(a => a.id), 0) + 1,
                 name: document.getElementById('name').value,
                 icon: document.getElementById('icon').value,
                 categories: categories,
                 description: document.getElementById('description').value,
-                url: document.getElementById('url').value,
+                urls: urls,
                 credentials: credentials
             };
 
@@ -767,6 +834,7 @@
             renderCategoryCheckboxes('categoryCheckboxes', 'categoryMultiselectText');
             document.getElementById('newCategory').value = '';
             document.getElementById('categoryMultiselect').classList.remove('open');
+            resetUrlSets('urlSets');
             resetCredentialSets('credentialSets');
             document.getElementById('addModal').classList.add('show');
         }
@@ -787,7 +855,7 @@
             renderCategoryCheckboxes('editCategoryCheckboxes', 'editCategoryMultiselectText', app.categories);
             document.getElementById('editNewCategory').value = '';
             document.getElementById('editCategoryMultiselect').classList.remove('open');
-            document.getElementById('editUrl').value = app.url;
+            resetUrlSets('editUrlSets', app.urls);
             resetCredentialSets('editCredentialSets', app.credentials);
             document.getElementById('editDescription').value = app.description;
 
@@ -814,6 +882,12 @@
                 return;
             }
 
+            const urls = getUrlSets('editUrlSets');
+            if (urls.length === 0) {
+                showAlert('error', '❌ Please add at least one URL');
+                return;
+            }
+
             const id = parseInt(document.getElementById('editId').value);
             const updatedApp = {
                 id: id,
@@ -821,7 +895,7 @@
                 icon: document.getElementById('editIcon').value,
                 categories: categories,
                 description: document.getElementById('editDescription').value,
-                url: document.getElementById('editUrl').value,
+                urls: urls,
                 credentials: credentials
             };
 
