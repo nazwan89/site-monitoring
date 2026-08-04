@@ -285,7 +285,7 @@
                     (statusValue === 'active' && app.isActive === true) ||
                     (statusValue === 'inactive' && app.isActive === false);
                 return matchesCategory && matchesSearch && matchesStatus;
-            });
+            }).sort((a, b) => a.name.localeCompare(b.name));
         }
 
         function filterApps() {
@@ -329,10 +329,13 @@
         }
 
         // ==================== RENDER APPLICATIONS ====================
-        function renderStatusBadge(isActive) {
-            if (isActive === true) return '<div class="active-badge">✓ Active</div>';
-            if (isActive === false) return '<div class="inactive-badge">✕ Inactive</div>';
-            return '<div class="checking-badge">⏳ Checking…</div>';
+        // Only shown when the visitor has an active session — anonymous browsing hides the
+        // credentials trigger entirely instead of just gating the click.
+        function renderKeyButton(app, usable) {
+            const disabledAttr = usable ? '' : 'disabled';
+            const title = usable ? 'View credentials' : 'This app is inactive';
+            const onclick = usable ? `requireLoginFor(() => showCredentials(${app.id}))` : 'return false;';
+            return `<button class="icon-btn copy-btn card-key-btn" onclick="${onclick}" ${disabledAttr} title="${title}">🔑</button>`;
         }
 
         function renderApps(filtered = applications) {
@@ -356,23 +359,18 @@
             const visibleApps = filtered.slice(0, visibleCount);
 
             grid.innerHTML = visibleApps.map(app => {
-                const statusBadge = renderStatusBadge(app.isActive);
                 const usable = app.isActive === true;
+                const keyButton = sessionId ? renderKeyButton(app, usable) : '';
                 return `
                 <div class="app-card ${app.isActive === false ? 'inactive-card' : ''}">
-                    <div class="card-icon">${app.icon}</div>
-                    <div class="card-name">${app.name}</div>
+                    ${keyButton}
+                    <div class="card-header">
+                        <div class="card-icon">${app.icon}</div>
+                        <div class="card-name">${app.name}</div>
+                    </div>
                     <div class="card-categories">${app.categories.map(c => `<span class="card-category">${c}</span>`).join('')}</div>
                     <div class="card-description" title="${app.description}">${app.description}</div>
-                    <div class="card-footer">
-                        ${statusBadge}
-                        <div class="card-actions">
-                            <button class="icon-btn copy-btn"
-                                    onclick="${usable ? `requireLoginFor(() => showCredentials(${app.id}))` : 'return false;'}"
-                                    ${!usable ? 'disabled' : ''}
-                                    title="${!usable ? 'This app is inactive' : 'View credentials'}">🔑</button>
-                        </div>
-                    </div>
+                    <div class="card-divider"></div>
                     <button class="launch-btn"
                             onclick="${usable ? `window.open('${app.url}', '_blank')` : 'return false;'}"
                             ${!usable ? 'disabled' : ''}
