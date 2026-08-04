@@ -77,6 +77,16 @@
         </div>
     </div>
 
+    <!-- Description Modal -->
+    <div class="modal" id="descriptionModal" onclick="if(event.target.id === 'descriptionModal') closeDescriptionModal()">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeDescriptionModal()">✕</button>
+            <div class="modal-title" id="descriptionModalTitle"></div>
+
+            <div class="description-modal-body" id="descriptionModalBody"></div>
+        </div>
+    </div>
+
     <script>
         let applications = [];
         let sessionId = null;
@@ -442,7 +452,8 @@
                         <div class="card-name">${app.name}</div>
                     </div>
                     <div class="card-categories">${app.categories.map(c => `<span class="card-category">${c}</span>`).join('')}</div>
-                    <div class="card-description" title="${app.description}">${app.description}</div>
+                    <div class="card-description" id="desc-${app.id}">${escapeHtml(app.description)}</div>
+                    <button type="button" class="read-more-btn" id="readmore-${app.id}" style="display:none;" onclick="showDescription(${app.id})">Read more</button>
                     <div class="card-divider"></div>
                     ${renderLaunchRow(app, usable)}
                 </div>
@@ -450,6 +461,32 @@
             }).join('');
 
             toggleSentinel(visibleCount < filtered.length);
+            revealReadMoreButtons();
+        }
+
+        // Line-clamped descriptions truncate via CSS with no way to know in advance whether a
+        // given one actually overflows, so measure after render and only show "Read more" where
+        // the text was actually cut off.
+        function revealReadMoreButtons() {
+            requestAnimationFrame(() => {
+                document.querySelectorAll('.card-description').forEach(el => {
+                    const appId = el.id.replace('desc-', '');
+                    const btn = document.getElementById(`readmore-${appId}`);
+                    if (btn) btn.style.display = el.scrollHeight > el.clientHeight + 1 ? 'inline-block' : 'none';
+                });
+            });
+        }
+
+        function showDescription(appId) {
+            const app = applications.find(a => a.id === appId);
+            if (!app) return;
+            document.getElementById('descriptionModalTitle').textContent = app.name;
+            document.getElementById('descriptionModalBody').textContent = app.description;
+            document.getElementById('descriptionModal').classList.add('show');
+        }
+
+        function closeDescriptionModal() {
+            document.getElementById('descriptionModal').classList.remove('show');
         }
 
         // ==================== LAZY LOADING ====================
