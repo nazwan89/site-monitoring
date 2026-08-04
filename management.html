@@ -5,8 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Millennium Radius - Admin Console</title>
     <link rel="stylesheet" href="css/styles.css">
+    <script>
+        (function() {
+            var pref = localStorage.getItem('theme') || 'system';
+            if (pref === 'light' || pref === 'dark') {
+                document.documentElement.setAttribute('data-theme', pref);
+            }
+        })();
+    </script>
 </head>
 <body>
+    <button type="button" class="theme-select theme-select-corner" id="themeToggle" title="Toggle theme">🌙</button>
     <div class="container">
         <!-- Dashboard -->
         <div class="dashboard" id="dashboardSection">
@@ -226,6 +235,47 @@
         let pageSize = 5;
         const BASE_CATEGORIES = ['Core Systems', 'CRM', 'Communication', 'Finance', 'Analytics & Data'];
         const URL_CHECK_TIMEOUT_MS = 5000;
+
+        // ==================== THEME ====================
+        // No explicit UI choice for "system" — an explicit light/dark pick is stored and wins;
+        // absent that, the theme silently tracks the OS preference (including live changes).
+        function getEffectiveTheme() {
+            const stored = localStorage.getItem('theme');
+            if (stored === 'light' || stored === 'dark') return stored;
+            return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+        }
+
+        function updateThemeIcon() {
+            const btn = document.getElementById('themeToggle');
+            if (btn) btn.textContent = getEffectiveTheme() === 'light' ? '☀️' : '🌙';
+        }
+
+        function applyTheme() {
+            const stored = localStorage.getItem('theme');
+            if (stored === 'light' || stored === 'dark') {
+                document.documentElement.setAttribute('data-theme', stored);
+            } else {
+                document.documentElement.removeAttribute('data-theme');
+            }
+            updateThemeIcon();
+        }
+
+        function toggleTheme() {
+            localStorage.setItem('theme', getEffectiveTheme() === 'light' ? 'dark' : 'light');
+            applyTheme();
+        }
+
+        function initThemeToggle() {
+            const btn = document.getElementById('themeToggle');
+            if (!btn) return;
+            btn.addEventListener('click', toggleTheme);
+            updateThemeIcon();
+        }
+
+        window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
+            const stored = localStorage.getItem('theme');
+            if (stored !== 'light' && stored !== 'dark') applyTheme();
+        });
 
         // ==================== AUTHENTICATION ====================
         async function handleLogout() {
@@ -955,6 +1005,7 @@
         const STATUS_REFRESH_INTERVAL_MS = 30 * 1000;
 
         window.addEventListener('load', () => {
+            initThemeToggle();
             const savedSessionId = localStorage.getItem('sessionId');
             if (savedSessionId) {
                 sessionId = savedSessionId;
