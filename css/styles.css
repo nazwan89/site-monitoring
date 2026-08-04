@@ -1,10 +1,10 @@
         :root {
             --bg-body: #0f1828;
-            --bg-panel: rgba(15, 24, 40, 0.85);
-            --bg-panel-strong: rgba(15, 24, 40, 0.95);
-            --bg-panel-inactive: rgba(20, 30, 50, 0.7);
-            --bg-input: rgba(30, 40, 60, 0.6);
-            --bg-input-focus: rgba(30, 40, 60, 0.8);
+            --bg-panel: rgba(20, 30, 48, 0.55);
+            --bg-panel-strong: rgba(20, 30, 48, 0.72);
+            --bg-panel-inactive: rgba(25, 35, 55, 0.45);
+            --bg-input: rgba(35, 48, 72, 0.45);
+            --bg-input-focus: rgba(35, 48, 72, 0.65);
             --bg-input-subtle: rgba(30, 40, 60, 0.4);
             --bg-dropdown: #16233d;
             --bg-dropdown-option: #1a2a4a;
@@ -34,15 +34,18 @@
             --shadow-soft: rgba(0, 0, 0, 0.2);
             --shadow-default: rgba(0, 0, 0, 0.3);
             --shadow-strong: rgba(0, 0, 0, 0.5);
+
+            --glass-blur: blur(28px) saturate(180%);
+            --glass-blur-soft: blur(14px) saturate(160%);
         }
 
         :root[data-theme="light"] {
             --bg-body: #eef2fa;
-            --bg-panel: rgba(255, 255, 255, 0.85);
-            --bg-panel-strong: rgba(255, 255, 255, 0.97);
-            --bg-panel-inactive: rgba(219, 227, 240, 0.75);
-            --bg-input: rgba(255, 255, 255, 0.9);
-            --bg-input-focus: #ffffff;
+            --bg-panel: rgba(255, 255, 255, 0.55);
+            --bg-panel-strong: rgba(255, 255, 255, 0.78);
+            --bg-panel-inactive: rgba(219, 227, 240, 0.5);
+            --bg-input: rgba(255, 255, 255, 0.65);
+            --bg-input-focus: rgba(255, 255, 255, 0.88);
             --bg-input-subtle: rgba(234, 240, 250, 0.9);
             --bg-dropdown: #ffffff;
             --bg-dropdown-option: #ffffff;
@@ -77,11 +80,11 @@
         @media (prefers-color-scheme: light) {
             :root:not([data-theme]) {
                 --bg-body: #eef2fa;
-                --bg-panel: rgba(255, 255, 255, 0.85);
-                --bg-panel-strong: rgba(255, 255, 255, 0.97);
-                --bg-panel-inactive: rgba(219, 227, 240, 0.75);
-                --bg-input: rgba(255, 255, 255, 0.9);
-                --bg-input-focus: #ffffff;
+                --bg-panel: rgba(255, 255, 255, 0.55);
+                --bg-panel-strong: rgba(255, 255, 255, 0.78);
+                --bg-panel-inactive: rgba(219, 227, 240, 0.5);
+                --bg-input: rgba(255, 255, 255, 0.65);
+                --bg-input-focus: rgba(255, 255, 255, 0.88);
                 --bg-input-subtle: rgba(234, 240, 250, 0.9);
                 --bg-dropdown: #ffffff;
                 --bg-dropdown-option: #ffffff;
@@ -305,7 +308,7 @@
 
         .login-card {
             background: var(--bg-panel);
-            backdrop-filter: blur(10px);
+            backdrop-filter: var(--glass-blur);
             border-radius: 12px;
             padding: 40px;
             width: 100%;
@@ -480,7 +483,7 @@
         /* Header */
         .header {
             background: var(--bg-panel);
-            backdrop-filter: blur(10px);
+            backdrop-filter: var(--glass-blur);
             border-radius: 12px;
             padding: 30px;
             margin-bottom: 30px;
@@ -594,7 +597,7 @@
         /* Controls */
         .controls {
             background: var(--bg-panel);
-            backdrop-filter: blur(10px);
+            backdrop-filter: var(--glass-blur);
             border-radius: 12px;
             padding: 25px;
             margin-bottom: 30px;
@@ -702,7 +705,7 @@
             font-weight: 500;
             color: var(--text-secondary);
             transition: all 0.3s;
-            backdrop-filter: blur(4px);
+            backdrop-filter: var(--glass-blur-soft);
         }
 
         .filter-tab:hover {
@@ -725,7 +728,7 @@
         /* Stats */
         .stats {
             background: var(--bg-panel);
-            backdrop-filter: blur(10px);
+            backdrop-filter: var(--glass-blur);
             border-radius: 12px;
             padding: 15px 25px;
             margin-bottom: 30px;
@@ -767,7 +770,7 @@
 
         .app-card {
             background: var(--bg-panel);
-            backdrop-filter: blur(10px);
+            backdrop-filter: var(--glass-blur);
             border-radius: 12px;
             padding: 25px;
             box-shadow: 0 8px 32px var(--shadow-default),
@@ -1043,7 +1046,7 @@
             z-index: 1000;
             align-items: center;
             justify-content: center;
-            backdrop-filter: blur(4px);
+            backdrop-filter: var(--glass-blur-soft);
             animation: fadeIn 0.3s ease;
         }
 
@@ -1053,7 +1056,7 @@
 
         .modal-content {
             background: var(--bg-panel-strong);
-            backdrop-filter: blur(10px);
+            backdrop-filter: var(--glass-blur);
             border-radius: 12px;
             padding: 40px;
             width: 100%;
@@ -1330,7 +1333,7 @@
         /* Main Content */
         .main-content {
             background: var(--bg-panel);
-            backdrop-filter: blur(10px);
+            backdrop-filter: var(--glass-blur);
             border-radius: 12px;
             padding: 30px;
             margin-bottom: 30px;
