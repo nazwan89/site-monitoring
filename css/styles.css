@@ -2141,6 +2141,12 @@
             border: 1px solid rgba(150, 150, 150, 0.3);
         }
 
+        .status-archived {
+            background: rgba(150, 120, 80, 0.2);
+            color: #c9a876;
+            border: 1px solid rgba(150, 120, 80, 0.3);
+        }
+
         .action-buttons {
             display: flex;
             gap: 8px;

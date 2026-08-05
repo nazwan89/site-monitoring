@@ -63,6 +63,7 @@
                         <option value="all">All Status</option>
                         <option value="active">Active</option>
                         <option value="inactive">Inactive</option>
+                        <option value="archived">Archived</option>
                     </select>
                 </div>
 
@@ -483,9 +484,13 @@
                 const matchesSearch = app.name.toLowerCase().includes(searchText) ||
                     app.categories.some(c => c.toLowerCase().includes(searchText)) ||
                     app.description.toLowerCase().includes(searchText);
-                const matchesStatus = statusValue === 'all' ||
-                    (statusValue === 'active' && app.isActive === true) ||
-                    (statusValue === 'inactive' && app.isActive === false);
+                const matchesStatus = statusValue === 'archived'
+                    ? app.archived === true
+                    : !app.archived && (
+                        statusValue === 'all' ||
+                        (statusValue === 'active' && app.isActive === true) ||
+                        (statusValue === 'inactive' && app.isActive === false)
+                    );
                 return matchesSearch && matchesStatus;
             });
 
@@ -505,7 +510,8 @@
         }
 
         // ==================== RENDER TABLE ====================
-        function renderStatusBadge(isActive) {
+        function renderStatusBadge(isActive, archived) {
+            if (archived) return '<span class="status-badge status-archived">📦 Archived</span>';
             if (isActive === true) return '<span class="status-badge status-active">✓ Active</span>';
             if (isActive === false) return '<span class="status-badge status-inactive">✗ Inactive</span>';
             return '<span class="status-badge status-checking">⏳ Checking…</span>';
@@ -569,11 +575,13 @@
                     <td>${app.categories.map(c => `<span class="category-tag">${c}</span>`).join('')}</td>
                     <td class="description-cell" title="${app.description}">${app.description}</td>
                     <td>${renderUrlCell(app.urls)}</td>
-                    <td>${renderStatusBadge(app.isActive)}</td>
+                    <td>${renderStatusBadge(app.isActive, app.archived)}</td>
                     <td>
                         <div class="action-buttons">
                             <button class="btn btn-edit" onclick="openEditModal(${app.id})">✏️ Edit</button>
-                            <button class="btn btn-delete" onclick="deleteApplication(${app.id})">🗑️ Delete</button>
+                            ${app.archived
+                                ? `<button class="btn btn-neutral" onclick="unarchiveApplication(${app.id})">♻️ Unarchive</button>`
+                                : `<button class="btn btn-delete" onclick="archiveApplication(${app.id})">📦 Archive</button>`}
                         </div>
                     </td>
                 </tr>
@@ -1072,19 +1080,29 @@
         }
 
         // ==================== DELETE APPLICATION ====================
-        async function deleteApplication(id) {
-            if (!confirm('Are you sure you want to delete this application?')) return;
+        async function archiveApplication(id) {
+            if (!confirm('Archive this application? It will be hidden from the portal until unarchived.')) return;
+            await setArchived(id, true, '✅ Application archived successfully!');
+        }
 
+        async function unarchiveApplication(id) {
+            await setArchived(id, false, '✅ Application unarchived successfully!');
+        }
+
+        async function setArchived(id, archived, successMessage) {
             try {
                 const response = await fetch(`/api/applications/${id}?sessionId=${sessionId}`, {
-                    method: 'DELETE'
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ archived })
                 });
 
-                if (!response.ok) throw new Error('Failed to delete application');
+                if (!response.ok) throw new Error(`Failed to ${archived ? 'archive' : 'unarchive'} application`);
 
-                applications = applications.filter(a => a.id !== id);
+                const app = applications.find(a => a.id === id);
+                if (app) app.archived = archived;
                 renderTable();
-                showAlert('success', '✅ Application deleted successfully!');
+                showAlert('success', successMessage);
             } catch (error) {
                 showAlert('error', '❌ Error: ' + error.message);
             }

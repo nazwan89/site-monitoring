@@ -280,7 +280,7 @@
             try {
                 const response = await fetch('/data.json');
                 if (!response.ok) throw new Error('Failed to load data');
-                const raw = await response.json();
+                const raw = (await response.json()).filter(app => !app.archived);
                 const statusCache = loadStatusCache();
                 applications = raw.map(app => ({
                     ...app,
@@ -417,7 +417,7 @@
             try {
                 const response = await fetch('/data.json');
                 if (!response.ok) return;
-                const raw = await response.json();
+                const raw = (await response.json()).filter(app => !app.archived);
                 const previousStatus = Object.fromEntries(applications.map(a => [a.id, a.isActive]));
                 const statusCache = loadStatusCache();
                 applications = raw.map(app => ({
