@@ -395,7 +395,11 @@
                     (statusValue === 'active' && app.isActive === true) ||
                     (statusValue === 'inactive' && app.isActive === false);
                 return matchesCategory && matchesSearch && matchesStatus;
-            }).sort((a, b) => a.name.localeCompare(b.name));
+            }).sort((a, b) => {
+                const statusDiff = (b.isActive === true) - (a.isActive === true);
+                if (statusDiff !== 0) return statusDiff;
+                return a.name.localeCompare(b.name);
+            });
         }
 
         function filterApps() {
