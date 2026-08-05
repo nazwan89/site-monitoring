@@ -122,8 +122,17 @@
                     </div>
 
                     <div class="form-group-full">
-                        <label>Icon (Emoji) *</label>
-                        <input type="text" id="icon" placeholder="e.g., 🧠" maxlength="2" required>
+                        <label>Icon</label>
+                        <div class="icon-picker">
+                            <div class="icon-preview" id="iconPreview">🖥</div>
+                            <div class="icon-picker-actions">
+                                <label class="btn btn-neutral btn-small" for="iconFile">📤 Upload Image</label>
+                                <input type="file" id="iconFile" accept="image/png" style="display:none" onchange="handleIconUpload(event, 'icon', 'iconPreview')">
+                                <button type="button" class="btn btn-neutral btn-small" onclick="resetIcon('icon', 'iconPreview')">↺ Default</button>
+                            </div>
+                        </div>
+                        <input type="hidden" id="icon">
+                        <div class="field-hint">PNG image, cropped and resized to 60×60. Leave empty to use the default 🖥 icon.</div>
                     </div>
 
                     <div class="form-group-full">
@@ -186,8 +195,17 @@
                     </div>
 
                     <div class="form-group-full">
-                        <label>Icon (Emoji) *</label>
-                        <input type="text" id="editIcon" maxlength="2" required>
+                        <label>Icon</label>
+                        <div class="icon-picker">
+                            <div class="icon-preview" id="editIconPreview">🖥</div>
+                            <div class="icon-picker-actions">
+                                <label class="btn btn-neutral btn-small" for="editIconFile">📤 Upload Image</label>
+                                <input type="file" id="editIconFile" accept="image/png" style="display:none" onchange="handleIconUpload(event, 'editIcon', 'editIconPreview')">
+                                <button type="button" class="btn btn-neutral btn-small" onclick="resetIcon('editIcon', 'editIconPreview')">↺ Default</button>
+                            </div>
+                        </div>
+                        <input type="hidden" id="editIcon">
+                        <div class="field-hint">PNG image, cropped and resized to 60×60. Leave empty to use the default 🖥 icon.</div>
                     </div>
 
                     <div class="form-group-full">
@@ -546,7 +564,7 @@
 
             tbody.innerHTML = pageItems.map(app => `
                 <tr>
-                    <td class="icon-cell">${app.icon}</td>
+                    <td class="icon-cell">${renderIconMarkup(app.icon, 28)}</td>
                     <td><strong>${app.name}</strong></td>
                     <td>${app.categories.map(c => `<span class="category-tag">${c}</span>`).join('')}</td>
                     <td class="description-cell" title="${app.description}">${app.description}</td>
@@ -905,9 +923,64 @@
             }
         }
 
+        // ==================== ICON UPLOAD ====================
+        function renderIconMarkup(icon, size) {
+            if (icon && icon.startsWith('data:image')) {
+                return `<img src="${icon}" alt="" style="width:${size}px;height:${size}px;object-fit:cover;border-radius:${Math.round(size / 4)}px;vertical-align:middle;">`;
+            }
+            return icon || '🖥';
+        }
+
+        function setIconPreview(previewId, value) {
+            const el = document.getElementById(previewId);
+            if (!el) return;
+            if (value && value.startsWith('data:image')) {
+                el.innerHTML = `<img src="${value}" alt="Icon preview">`;
+            } else {
+                el.textContent = value || '🖥';
+            }
+        }
+
+        function handleIconUpload(event, hiddenInputId, previewId) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (!file.type.startsWith('image/')) {
+                showAlert('error', '❌ Please select an image file');
+                event.target.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 60;
+                    canvas.height = 60;
+                    const ctx = canvas.getContext('2d');
+                    const side = Math.min(img.width, img.height);
+                    const sx = (img.width - side) / 2;
+                    const sy = (img.height - side) / 2;
+                    ctx.drawImage(img, sx, sy, side, side, 0, 0, 60, 60);
+                    const dataUrl = canvas.toDataURL('image/png');
+                    document.getElementById(hiddenInputId).value = dataUrl;
+                    setIconPreview(previewId, dataUrl);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+            event.target.value = '';
+        }
+
+        function resetIcon(hiddenInputId, previewId) {
+            document.getElementById(hiddenInputId).value = '🖥';
+            setIconPreview(previewId, '🖥');
+        }
+
         // ==================== ADD MODAL ====================
         function openAddModal() {
             document.getElementById('icon').value = '🖥';
+            setIconPreview('iconPreview', '🖥');
             renderCategoryCheckboxes('categoryCheckboxes', 'categoryMultiselectText');
             document.getElementById('newCategory').value = '';
             document.getElementById('categoryMultiselect').classList.remove('open');
@@ -929,6 +1002,7 @@
             document.getElementById('editId').value = app.id;
             document.getElementById('editName').value = app.name;
             document.getElementById('editIcon').value = app.icon;
+            setIconPreview('editIconPreview', app.icon);
             renderCategoryCheckboxes('editCategoryCheckboxes', 'editCategoryMultiselectText', app.categories);
             document.getElementById('editNewCategory').value = '';
             document.getElementById('editCategoryMultiselect').classList.remove('open');

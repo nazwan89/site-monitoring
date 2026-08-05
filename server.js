@@ -178,6 +178,35 @@ const server = http.createServer((req, res) => {
         return;
     }
 
+    // GET /images/*
+    if (pathname.startsWith('/images/')) {
+        const requested = path.normalize(pathname).replace(/^(\.\.[/\\])+/, '');
+        const filePath = path.join(__dirname, requested);
+        if (!filePath.startsWith(path.join(__dirname, 'images'))) {
+            res.writeHead(403, { 'Content-Type': 'text/plain' });
+            res.end('403 - Forbidden');
+            return;
+        }
+        const ext = path.extname(filePath).toLowerCase();
+        const contentTypes = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.gif': 'image/gif' };
+        const contentType = contentTypes[ext];
+        if (!contentType) {
+            res.writeHead(404, { 'Content-Type': 'text/plain' });
+            res.end('404 - File not found');
+            return;
+        }
+        fs.readFile(filePath, (err, data) => {
+            if (err) {
+                res.writeHead(404, { 'Content-Type': 'text/plain' });
+                res.end('404 - File not found');
+                return;
+            }
+            res.writeHead(200, { 'Content-Type': contentType });
+            res.end(data);
+        });
+        return;
+    }
+
     // GET /data.json
     if (pathname === '/data.json') {
         const data = readData();
